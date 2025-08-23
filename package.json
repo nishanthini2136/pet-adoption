@@ -4,7 +4,6 @@
   "private": true,
   "scripts": {
     "start": "node server/server.js",
-    "client": "react-scripts start",
     "server": "nodemon server/server.js",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "build": "npm run install-client && npm run build-client",
