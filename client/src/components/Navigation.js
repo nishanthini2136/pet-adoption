@@ -1,14 +1,21 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { getCurrentUser, logout } from '../utils/auth';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import './Navigation.css';
 
 const Navigation = () => {
   const location = useLocation();
-  const currentUser = getCurrentUser();
+  const navigate = useNavigate();
+  const { user, logout, isAuthenticated } = useAuth();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async (e) => {
+    e.preventDefault();
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
   };
 
   return (
@@ -16,20 +23,30 @@ const Navigation = () => {
       <nav className="nav">
         <Link to="/" className="logo">🐾 PetAdopt</Link>
         <ul className="nav-links">
-          <li><Link to="/pets" className={location.pathname === '/pets' ? 'active' : ''}>Browse Pets</Link></li>
-          <li><Link to="/articles" className={location.pathname === '/articles' ? 'active' : ''}>Articles</Link></li>
-          <li><Link to="/events" className={location.pathname === '/events' ? 'active' : ''}>Events</Link></li>
+          {/* Only show Browse Pets for non-authenticated users and regular users, not for pet owners */}
+          {(!isAuthenticated() || (user?.role !== 'petowner' && user?.role !== 'admin')) && (
+            <li><Link to="/pets" className={location.pathname === '/pets' ? 'active' : ''}>Browse Pets</Link></li>
+          )}
+          {/* Hide Articles and Events for Pet Owners */}
+          {user?.role !== 'petowner' && (
+            <>
+              <li><Link to="/articles" className={location.pathname === '/articles' ? 'active' : ''}>Articles</Link></li>
+              <li><Link to="/events" className={location.pathname === '/events' ? 'active' : ''}>Events</Link></li>
+            </>
+          )}
           <li><Link to="/contact" className={location.pathname === '/contact' ? 'active' : ''}>Contact</Link></li>
           
-          {currentUser ? (
+          {isAuthenticated() ? (
             <>
-              {currentUser.role === 'admin' ? (
-                <li><Link to="/admin" className={location.pathname === '/admin' ? 'active' : ''}>Admin Dashboard</Link></li>
+              {user?.role === 'admin' ? (
+                <li><Link to="/admin-dashboard" className={location.pathname === '/admin-dashboard' ? 'active' : ''}>Admin Dashboard</Link></li>
+              ) : user?.role === 'petowner' ? (
+                <li><Link to="/petowner" className={location.pathname === '/petowner' ? 'active' : ''}>Dashboard</Link></li>
               ) : (
                 <li><Link to="/dashboard" className={location.pathname === '/dashboard' ? 'active' : ''}>My Dashboard</Link></li>
               )}
               <li className="user-menu">
-                <span className="user-name">Welcome, {currentUser.name}</span>
+                <span className="user-name">Welcome, {user?.username || 'User'}</span>
                 <button onClick={handleLogout} className="logout-btn">Logout</button>
               </li>
             </>

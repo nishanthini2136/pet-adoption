@@ -1,33 +1,64 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getCurrentUser } from '../utils/auth';
+import { useAuth } from '../contexts/AuthContext';
+import { toast } from 'react-toastify';
 
 const UserDashboard = () => {
-  // Mock data (will be replaced with API calls)
-  const adoptionRequests = [
-    {
-      id: 1,
-      petName: 'Buddy',
-      status: 'Pending',
-      date: '2024-01-15',
-      petImage: 'https://images.unsplash.com/photo-1552053831-71594a27632d?w=300&h=200&fit=crop'
-    },
-    {
-      id: 2,
-      petName: 'Whiskers',
-      status: 'Approved',
-      date: '2024-01-10',
-      petImage: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=300&h=200&fit=crop'
-    }
-  ];
+  const { token } = useAuth();
+  const [adoptedPets, setAdoptedPets] = useState([]);
+  const [pendingAdoptions, setPendingAdoptions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const savedPets = [
-    {
-      id: 3,
-      name: 'Max',
-      image: 'https://images.unsplash.com/photo-1546527868-ccb7ee7dfa6a?w=300&h=200&fit=crop'
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        // Fetch adopted pets
+        const [adoptedResponse, pendingResponse] = await Promise.all([
+          fetch('http://localhost:5000/api/adoptions/my-adoptions', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          }),
+          fetch('http://localhost:5000/api/adoptions', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          })
+        ]);
+
+        const adoptedData = await adoptedResponse.json();
+        const pendingData = await pendingResponse.json();
+
+        if (adoptedResponse.ok) {
+          setAdoptedPets(adoptedData.data || []);
+        } else {
+          setError(adoptedData.message || 'Failed to fetch adopted pets');
+        }
+
+        if (pendingResponse.ok) {
+          setPendingAdoptions(pendingData.data || []);
+        } else {
+          console.error('Failed to fetch pending adoptions:', pendingData.message);
+        }
+      } catch (err) {
+        setError('Error connecting to server');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (token) {
+      fetchData();
+    } else {
+      setLoading(false);
     }
-  ];
+  }, [token]);
 
   const currentUser = getCurrentUser();
 
@@ -38,59 +69,163 @@ const UserDashboard = () => {
           Welcome, {currentUser?.name || 'User'}! 🐾
         </h1>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-          {/* Adoption Requests */}
-          <div style={{ background: 'white', padding: '2rem', borderRadius: '15px', boxShadow: '0 5px 15px rgba(0,0,0,0.1)' }}>
-            <h3 style={{ marginBottom: '1rem', borderBottom: '2px solid #667eea', paddingBottom: '0.5rem' }}>Adoption Requests</h3>
-            {adoptionRequests.map(request => (
-              <div key={request.id} style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                padding: '1rem', 
-                border: '1px solid #eee', 
-                borderRadius: '10px',
-                marginBottom: '1rem'
-              }}>
-                <img src={request.petImage} alt={request.petName} style={{ width: '60px', height: '60px', borderRadius: '50%', objectFit: 'cover', marginRight: '1rem' }} />
-                <div style={{ flex: 1 }}>
-                  <h4>{request.petName}</h4>
-                  <p style={{ color: '#666', fontSize: '0.9rem' }}>Applied: {request.date}</p>
-                </div>
-                <span style={{ 
-                  padding: '0.5rem 1rem', 
-                  borderRadius: '20px', 
-                  fontSize: '0.8rem',
-                  fontWeight: 'bold',
-                  background: request.status === 'Approved' ? '#d4edda' : request.status === 'Rejected' ? '#f8d7da' : '#fff3cd',
-                  color: request.status === 'Approved' ? '#155724' : request.status === 'Rejected' ? '#721c24' : '#856404'
-                }}>
-                  {request.status}
-                </span>
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '2rem' }}>Loading data...</div>
+        ) : error ? (
+          <div style={{ textAlign: 'center', padding: '2rem', color: 'red' }}>{error}</div>
+        ) : (
+          <>
+            {/* Adopted Pets Section */}
+            <div style={{ background: 'white', padding: '2rem', borderRadius: '15px', boxShadow: '0 5px 15px rgba(0,0,0,0.1)', marginBottom: '2rem' }}>
+              <h3 style={{ marginBottom: '1rem', borderBottom: '2px solid #667eea', paddingBottom: '0.5rem' }}>My Adopted Pets</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1.5rem' }}>
+                {adoptedPets.length > 0 ? (
+                  adoptedPets.map(pet => (
+                    <div key={pet._id} className="pet-card" style={{ 
+                      border: '1px solid #eee', 
+                      borderRadius: '10px',
+                      overflow: 'hidden',
+                      transition: 'transform 0.3s ease',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                    }}>
+                      <img
+                        src={pet.imageUrl || 'https://via.placeholder.com/300x200?text=No+Image'}
+                        alt={pet.name}
+                        style={{ width: '100%', height: '180px', objectFit: 'cover' }}
+                      />
+                      <div style={{ padding: '1rem' }}>
+                        <h4 style={{ margin: '0.5rem 0', color: '#2d3748' }}>{pet.name}</h4>
+                        <p style={{ color: '#718096', margin: '0.25rem 0', fontSize: '0.9rem' }}>
+                          {pet.breed} • {pet.age}
+                        </p>
+                        <p style={{ color: '#4a5568', margin: '0.5rem 0', fontSize: '0.9rem' }}>
+                          Adopted on: {new Date(pet.adoptionDate || pet.createdAt).toLocaleDateString()}
+                        </p>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem' }}>
+                          <span style={{ 
+                            padding: '0.25rem 0.5rem', 
+                            borderRadius: '9999px', 
+                            backgroundColor: '#c6f6d5',
+                            color: '#22543d',
+                            fontSize: '0.75rem',
+                            fontWeight: 'bold'
+                          }}>
+                            Adopted
+                          </span>
+                          <Link 
+                            to={`/pets/${pet._id}`} 
+                            style={{
+                              color: '#4299e1',
+                              textDecoration: 'none',
+                              fontWeight: '500',
+                              fontSize: '0.9rem',
+                              ':hover': {
+                                textDecoration: 'underline'
+                              }
+                            }}
+                          >
+                            View Details
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p style={{ textAlign: 'center', padding: '2rem' }}>No available pets found.</p>
+                )}
               </div>
-            ))}
-          </div>
+              <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+                <Link 
+                  to="/pets" 
+                  className="btn-primary"
+                  style={{
+                    display: 'inline-block',
+                    padding: '0.75rem 1.5rem',
+                    backgroundColor: '#4f46e5',
+                    color: 'white',
+                    borderRadius: '0.375rem',
+                    textDecoration: 'none',
+                    fontWeight: '500',
+                    transition: 'background-color 0.2s',
+                    ':hover': {
+                      backgroundColor: '#4338ca'
+                    }
+                  }}
+                >
+                  Browse Available Pets
+                </Link>
+              </div>
+            </div>
 
-          {/* Saved Pets */}
-          <div style={{ background: 'white', padding: '2rem', borderRadius: '15px', boxShadow: '0 5px 15px rgba(0,0,0,0.1)' }}>
-            <h3 style={{ marginBottom: '1rem', borderBottom: '2px solid #667eea', paddingBottom: '0.5rem' }}>Saved Pets</h3>
-            {savedPets.map(pet => (
-              <div key={pet.id} style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                padding: '1rem', 
-                border: '1px solid #eee', 
-                borderRadius: '10px',
-                marginBottom: '1rem'
-              }}>
-                <img src={pet.image} alt={pet.name} style={{ width: '60px', height: '60px', borderRadius: '50%', objectFit: 'cover', marginRight: '1rem' }} />
-                <div style={{ flex: 1 }}>
-                  <h4>{pet.name}</h4>
+            {/* Pending Adoptions Section */}
+            {pendingAdoptions.length > 0 && (
+                <div style={{ background: 'white', padding: '2rem', borderRadius: '15px', boxShadow: '0 5px 15px rgba(0,0,0,0.1)', marginBottom: '2rem' }}>
+                  <h3 style={{ marginBottom: '1rem', borderBottom: '2px solid #667eea', paddingBottom: '0.5rem' }}>Pending Adoptions</h3>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr style={{ backgroundColor: '#f7fafc', borderBottom: '1px solid #e2e8f0' }}>
+                          <th style={{ padding: '0.75rem 1rem', textAlign: 'left', color: '#4a5568', fontWeight: '600', fontSize: '0.875rem' }}>Pet</th>
+                          <th style={{ padding: '0.75rem 1rem', textAlign: 'left', color: '#4a5568', fontWeight: '600', fontSize: '0.875rem' }}>Status</th>
+                          <th style={{ padding: '0.75rem 1rem', textAlign: 'left', color: '#4a5568', fontWeight: '600', fontSize: '0.875rem' }}>Date</th>
+                          <th style={{ padding: '0.75rem 1rem', textAlign: 'left', color: '#4a5568', fontWeight: '600', fontSize: '0.875rem' }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {pendingAdoptions.map(adoption => (
+                          <tr key={adoption._id} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                            <td style={{ padding: '1rem', display: 'flex', alignItems: 'center' }}>
+                              <img 
+                                src={adoption.pet?.imageUrl || 'https://via.placeholder.com/50?text=Pet'} 
+                                alt={adoption.pet?.name || 'Pet'} 
+                                style={{ width: '50px', height: '50px', borderRadius: '8px', objectFit: 'cover', marginRight: '1rem' }} 
+                              />
+                              <span style={{ fontWeight: '500' }}>{adoption.pet?.name || 'Pet'}</span>
+                            </td>
+                            <td style={{ padding: '1rem' }}>
+                              <span style={{
+                                padding: '0.25rem 0.5rem',
+                                borderRadius: '9999px',
+                                backgroundColor: adoption.status === 'Approved' ? '#c6f6d5' : 
+                                              adoption.status === 'Rejected' ? '#fed7d7' : '#feebc8',
+                                color: adoption.status === 'Approved' ? '#22543d' : 
+                                      adoption.status === 'Rejected' ? '#9b2c2c' : '#9c4221',
+                                fontSize: '0.75rem',
+                                fontWeight: 'bold'
+                              }}>
+                                {adoption.status}
+                              </span>
+                            </td>
+                            <td style={{ padding: '1rem', color: '#718096', fontSize: '0.875rem' }}>
+                              {new Date(adoption.createdAt).toLocaleDateString()}
+                            </td>
+                            <td style={{ padding: '1rem' }}>
+                              {adoption.pet && (
+                                <Link 
+                                  to={`/pets/${adoption.pet._id}`} 
+                                  style={{
+                                    color: '#4299e1',
+                                    textDecoration: 'none',
+                                    fontWeight: '500',
+                                    fontSize: '0.875rem',
+                                    ':hover': {
+                                      textDecoration: 'underline'
+                                    }
+                                  }}
+                                >
+                                  View
+                                </Link>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-                <Link to={`/pet/${pet.id}`} className="btn" style={{ fontSize: '0.8rem', padding: '0.5rem 1rem' }}>View</Link>
-              </div>
-            ))}
-          </div>
-        </div>
+              )}
+          </>
+        )}
 
         {/* Profile Info */}
         <div style={{ background: 'white', padding: '2rem', borderRadius: '15px', boxShadow: '0 5px 15px rgba(0,0,0,0.1)', marginTop: '2rem' }}>
@@ -104,7 +239,7 @@ const UserDashboard = () => {
             <div>
               <p><strong>Address:</strong> 123 Main St, New York, NY 10001</p>
               <p><strong>Member Since:</strong> January 2024</p>
-              <p><strong>Total Applications:</strong> {adoptionRequests.length}</p>
+              <p><strong>Total Applications:</strong> {pendingAdoptions.length}</p>
             </div>
           </div>
           <button className="btn" style={{ marginTop: '1rem' }}>Update Profile</button>

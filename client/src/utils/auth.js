@@ -25,8 +25,15 @@ export const isUser = () => {
 };
 
 export const logout = () => {
+  // Clear all auth-related data
   localStorage.removeItem('user');
+  localStorage.removeItem('token');
+  
+  // Redirect to login page
   window.location.href = '/login';
+  
+  // Optional: Force a full page reload to reset the application state
+  window.location.reload();
 };
 
 export const requireAuth = (navigate) => {

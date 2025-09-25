@@ -9,6 +9,16 @@ const PetEvents = () => {
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
 
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+  };
+
   const handleViewDetails = (eventId) => {
     const event = events.find(e => e.id === eventId);
     setSelectedEvent(event);
@@ -132,15 +142,6 @@ const PetEvents = () => {
     ? events 
     : events.filter(event => event.type === selectedFilter);
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    });
-  };
 
   const getRegistrationStatus = (registered, capacity) => {
     const percentage = (registered / capacity) * 100;

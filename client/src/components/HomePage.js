@@ -11,38 +11,7 @@ const HomePage = () => {
   const [age, setAge] = useState('');
   const [showChat, setShowChat] = useState(false);
 
-  const featuredPets = [
-    {
-      id: 1,
-      name: 'Buddy',
-      type: 'Dog',
-      breed: 'Golden Retriever',
-      age: '2 years',
-      location: 'New York',
-      image: petImages.dogs.goldenRetriever.main,
-      description: 'Friendly and energetic Golden Retriever looking for an active family.'
-    },
-    {
-      id: 2,
-      name: 'Whiskers',
-      type: 'Cat',
-      breed: 'Persian',
-      age: '1 year',
-      location: 'Los Angeles',
-      image: petImages.cats.persian.main,
-      description: 'Calm and affectionate Persian cat perfect for a quiet home.'
-    },
-    {
-      id: 3,
-      name: 'Hopper',
-      type: 'Rabbit',
-      breed: 'Holland Lop',
-      age: '6 months',
-      location: 'Chicago',
-      image: petImages.rabbits.hollandLop.main,
-      description: 'Adorable Holland Lop bunny ready to hop into your heart.'
-    }
-  ];
+  const featuredPets = [];
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -58,7 +27,6 @@ const HomePage = () => {
           <h1>Find Your New Best Friend</h1>
           <p>Give a loving home to pets in need. Browse thousands of adoptable pets and find your perfect companion.</p>
           <div>
-            <Link to="/pets" className="btn">Browse Pets</Link>
             <Link to="/contact" className="btn btn-secondary">Learn More</Link>
           </div>
         </div>
@@ -111,51 +79,24 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Featured Pets */}
-      <section className="featured-section">
-        <h2 className="section-title">Featured Pets</h2>
-        <div className="pets-grid">
-          {featuredPets.map(pet => (
-            <div key={pet.id} className="pet-card">
-              <img src={pet.image} alt={pet.name} className="pet-image" />
-              <div className="pet-info">
-                <h3 className="pet-name">{pet.name}</h3>
-                <p className="pet-details">
-                  {pet.type} • {pet.breed} • {pet.age} • {pet.location}
-                </p>
-                <p className="pet-description">{pet.description}</p>
-                <Link to={`/pet/${pet.id}`} className="btn">View More</Link>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* Quick Links */}
       <section className="quick-links">
         <h2 className="section-title">Quick Actions</h2>
         <div className="links-grid">
           <div className="link-card">
             <div className="link-icon"></div>
-            <h3>Adopt a Pet</h3>
-            <p>Browse our available pets and find your perfect companion.</p>
-            <Link to="/pets" className="btn">Browse Pets</Link>
-          </div>
-          
-          <div className="link-card">
-            <div className="link-icon"></div>
             <h3>Donate</h3>
             <p>Support our mission to help pets find loving homes.</p>
             <Link to="/donate" className="btn">Donate Now</Link>
           </div>
-          
+
           <div className="link-card">
             <div className="link-icon"></div>
             <h3>Register a Pet</h3>
             <p>Have a pet to surrender? Register them with us.</p>
             <Link to="/register-pet" className="btn">Register Pet</Link>
           </div>
-          
+
           <div className="link-card">
             <div className="link-icon"></div>
             <h3>Contact Us</h3>

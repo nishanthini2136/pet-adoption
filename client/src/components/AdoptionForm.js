@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { FaPaw, FaHome, FaPhone, FaEnvelope, FaMapMarkerAlt, FaArrowLeft, FaArrowRight } from 'react-icons/fa';
+import { useAuth } from '../contexts/AuthContext';
+import { toast, ToastContainer } from 'react-toastify';
 import './AdoptionForm.css';
 
 const AdoptionForm = () => {
   const { petId } = useParams();
   const navigate = useNavigate();
+  const { token, user, isAuthenticated } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
   const [submitSuccess, setSubmitSuccess] = useState(false);
@@ -97,45 +100,54 @@ const AdoptionForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!validateForm()) {
+    // Check if user is authenticated
+    if (!isAuthenticated()) {
+      toast.error('Please log in to submit an adoption request');
+      navigate('/login');
+      return;
+    }
+    
+    // Check if user is a customer (not pet owner or admin)
+    if (user.role !== 'customer') {
+      toast.error('Only customers can submit adoption requests');
       return;
     }
     
     setIsSubmitting(true);
     
     try {
-      const response = await fetch('/api/adoption-applications', {
+      console.log('Submitting adoption request for pet:', petId);
+      
+      const response = await fetch(`http://localhost:5000/api/adoptions/${petId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          ...formData,
-          petId: petId,
-          submittedAt: new Date().toISOString()
+          notes: `${formData.reasonForAdoption} - ${formData.homeEnvironment} home with ${formData.timeAtHome} availability`
         })
       });
       
+      const result = await response.json();
+      console.log('Adoption response:', result);
+      
       if (!response.ok) {
-        throw new Error('Failed to submit application');
+        throw new Error(result.message || 'Failed to submit adoption request');
       }
       
-      const result = await response.json();
       setSubmitSuccess(true);
+      toast.success('🎉 Adoption request submitted successfully!');
       
-      // Redirect to success page after 2 seconds
+      // Redirect to dashboard after 2 seconds
       setTimeout(() => {
-        navigate('/adoption-success', { 
-          state: { 
-            applicationId: result.applicationId,
-            petId: petId 
-          } 
-        });
+        navigate('/dashboard');
       }, 2000);
       
     } catch (error) {
-      console.error('Error submitting application:', error);
-      setErrors({ submit: 'Failed to submit application. Please try again.' });
+      console.error('Error submitting adoption request:', error);
+      toast.error(error.message || 'Failed to submit adoption request. Please try again.');
+      setErrors({ submit: error.message || 'Failed to submit adoption request. Please try again.' });
     } finally {
       setIsSubmitting(false);
     }
@@ -144,12 +156,13 @@ const AdoptionForm = () => {
   useEffect(() => {
     const fetchPetDetails = async () => {
       try {
-        const response = await fetch(`/api/pets/${petId}`);
+        const response = await fetch(`http://localhost:5000/api/pets/${petId}`);
         if (!response.ok) throw new Error('Pet not found');
         const data = await response.json();
-        setPetDetails(data);
+        setPetDetails(data.data); // Server returns { success: true, data: pet }
       } catch (error) {
         console.error('Error fetching pet details:', error);
+        toast.error('Pet not found');
         navigate('/pets');
       }
     };
@@ -502,10 +515,11 @@ const AdoptionForm = () => {
       <div className="form-wrapper">
         {petDetails && (
           <div className="pet-summary">
-            <img src={petDetails.image} alt={petDetails.name} className="pet-thumbnail" />
+            <img src={petDetails.imageUrl || 'https://via.placeholder.com/100x100?text=Pet'} alt={petDetails.name} className="pet-thumbnail" />
             <div className="pet-info">
               <h2>Adopting {petDetails.name}</h2>
               <p>{petDetails.breed} • {petDetails.age} • {petDetails.location}</p>
+              <p><strong>Status:</strong> {petDetails.status}</p>
             </div>
           </div>
         )}
@@ -567,6 +581,20 @@ const AdoptionForm = () => {
 
         </form>
       </div>
+      
+      {/* Toast Container for notifications */}
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
     </div>
   );
 };

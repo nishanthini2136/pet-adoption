@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import './Register.css';
 
 const Register = () => {
@@ -9,56 +10,59 @@ const Register = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'user'
+    role: 'customer'
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { login } = useAuth();
 
-  const handleChange = (e) => {
+  const validateForm = () => {
+    if (!formData.username || !formData.email || !formData.password || !formData.confirmPassword) {
+      setError('All fields are required');
+      return false;
+    }
+    
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters long');
+      return false;
+    }
+    
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return false;
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError('Please enter a valid email address');
+      return false;
+    }
+    
+    return true;
+  };
+
+  const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prevState => ({
-      ...prevState,
+    setFormData(prev => ({
+      ...prev,
       [name]: value
     }));
-    // Clear error when user starts typing
     setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    
+    if (!validateForm()) return;
+
     setIsLoading(true);
-
-    // Basic validation
-    if (!formData.username || !formData.email || !formData.password || !formData.confirmPassword) {
-      setError('All fields are required');
-      setIsLoading(false);
-      return;
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      setIsLoading(false);
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters long');
-      setIsLoading(false);
-      return;
-    }
-
-    if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
-      setError('Please enter a valid email address');
-      setIsLoading(false);
-      return;
-    }
+    setError('');
 
     try {
       const response = await fetch('http://localhost:5000/api/auth/register', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           username: formData.username,
@@ -74,19 +78,21 @@ const Register = () => {
         throw new Error(data.message || 'Registration failed');
       }
 
-      // Registration successful and received token
-      const { token, user } = data;
-      
-      // Store token in localStorage
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
-      
-      // Navigate based on role
-      const redirectPath = user.role === 'admin' ? '/admin' : '/dashboard';
-      navigate(redirectPath);
-      
-      // Show success message
-      alert(`Registration successful! Welcome to Pet Adoption Platform. You will be redirected to your ${user.role} dashboard.`);
+      if (data.success && data.token) {
+        login(data.user, data.token);
+        // Show success message
+        alert('Registration successful! Welcome to Pet Adoption Platform.');
+        // Navigate based on user role
+        if (data.user.role === 'admin') {
+          navigate('/admin');
+        } else if (data.user.role === 'petowner') {
+          navigate('/petowner');
+        } else {
+          navigate('/dashboard');
+        }
+      } else {
+        throw new Error(data.message || 'Registration failed');
+      }
     } catch (err) {
       setError(err.message || 'An error occurred during registration');
       console.error('Registration error:', err);
@@ -108,7 +114,7 @@ const Register = () => {
               id="username"
               name="username"
               value={formData.username}
-              onChange={handleChange}
+              onChange={handleInputChange}
               placeholder="Enter your username"
               disabled={isLoading}
             />
@@ -120,7 +126,7 @@ const Register = () => {
               id="email"
               name="email"
               value={formData.email}
-              onChange={handleChange}
+              onChange={handleInputChange}
               placeholder="Enter your email"
               disabled={isLoading}
             />
@@ -132,7 +138,7 @@ const Register = () => {
               id="password"
               name="password"
               value={formData.password}
-              onChange={handleChange}
+              onChange={handleInputChange}
               placeholder="Enter your password"
               disabled={isLoading}
             />
@@ -144,7 +150,7 @@ const Register = () => {
               id="confirmPassword"
               name="confirmPassword"
               value={formData.confirmPassword}
-              onChange={handleChange}
+              onChange={handleInputChange}
               placeholder="Confirm your password"
               disabled={isLoading}
             />
@@ -155,11 +161,12 @@ const Register = () => {
               id="role"
               name="role"
               value={formData.role}
-              onChange={handleChange}
+              onChange={handleInputChange}
               disabled={isLoading}
               className="role-select"
             >
-              <option value="user">User</option>
+              <option value="customer">User</option>
+              <option value="petowner">Pet Owner</option>
               <option value="admin">Admin</option>
             </select>
           </div>

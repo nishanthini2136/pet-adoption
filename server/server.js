@@ -3,22 +3,64 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const authRoutes = require('./routes/auth');
+const petsRoutes = require('./routes/pets');
+const adoptionRoutes = require('./routes/adoption');
 
 dotenv.config();
 
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://localhost:3001'],
+  credentials: true
+}));
 app.use(express.json());
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('Connected to MongoDB'))
-  .catch((err) => console.error('MongoDB connection error:', err));
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  if (req.body && Object.keys(req.body).length > 0) {
+    console.log('Request body:', JSON.stringify(req.body, null, 2));
+  }
+  if (req.headers.authorization) {
+    console.log('Authorization header present:', req.headers.authorization.substring(0, 20) + '...');
+  }
+  next();
+});
+
+// Connect to MongoDB with improved options
+const connectDB = async () => {
+  try {
+    const conn = await mongoose.connect(process.env.MONGODB_URI, {
+      serverSelectionTimeoutMS: 10000, // Increase timeout to 10s
+      socketTimeoutMS: 45000,
+    });
+    console.log(`MongoDB Connected: ${conn.connection.host}`);
+  } catch (error) {
+    console.error('MongoDB connection error:', error.message);
+    // Retry the connection after 5 seconds
+    setTimeout(connectDB, 5000);
+  }
+};
+
+// Initialize database connection
+connectDB();
+
+// Handle MongoDB connection events
+mongoose.connection.on('error', err => {
+  console.error('MongoDB connection error:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.log('MongoDB disconnected. Reconnecting...');
+  connectDB();
+});
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/pets', petsRoutes);
+app.use('/api/adoptions', adoptionRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

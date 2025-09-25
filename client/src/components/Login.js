@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import './Login.css';
 
 const Login = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    role: 'user'
+    role: 'customer'
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-
+  const { login } = useAuth();
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -19,15 +20,26 @@ const Login = () => {
       ...prev,
       [name]: value
     }));
-    setError(''); // Clear error when user types
+    setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
     setError('');
+    
+    if (!formData.email || !formData.password) {
+      setError('Please enter both email and password');
+      return;
+    }
+
+    setIsLoading(true);
 
     try {
+      console.log('Attempting login with:', { 
+        email: formData.email, 
+        role: formData.role 
+      });
+      
       const response = await fetch('http://localhost:5000/api/auth/login', {
         method: 'POST',
         headers: {
@@ -41,16 +53,26 @@ const Login = () => {
       });
 
       const data = await response.json();
+      console.log('Login response:', data);
 
-      if (data.success) {
-        localStorage.setItem('user', JSON.stringify(data.user));
-        localStorage.setItem('token', data.token);
-        navigate(data.user.role === 'admin' ? '/admin' : '/dashboard');
-      } else {
-        setError(data.message || 'Invalid credentials');
+      if (!response.ok) {
+        throw new Error(data.message || 'Login failed');
+      }
+
+      if (data.success && data.token) {
+          login(data.user, data.token);
+          if (data.user.role === 'admin') {
+            navigate('/admin');
+          } else if (data.user.role === 'petowner') {
+            navigate('/petowner');
+          } else {
+            navigate('/dashboard');
+          }
+        } else {
+        throw new Error(data.message || 'Authentication failed');
       }
     } catch (err) {
-      setError('Login failed. Please try again.');
+      setError(err.message || 'Login failed. Please check your credentials and try again.');
     } finally {
       setIsLoading(false);
     }
@@ -109,7 +131,8 @@ const Login = () => {
               className="form-control role-select"
               disabled={isLoading}
             >
-              <option value="user">User</option>
+              <option value="customer">User</option>
+              <option value="petowner">Pet Owner</option>
               <option value="admin">Admin</option>
             </select>
           </div>

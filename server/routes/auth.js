@@ -10,7 +10,7 @@ router.post('/register', async (req, res, next) => {
     const { username, email, password, role } = req.body;
 
     // Validate role
-    if (role && !['user', 'admin'].includes(role)) {
+    if (role && !['customer', 'petowner', 'admin'].includes(role)) {
       return res.status(400).json({
         message: 'Invalid role specified'
       });
@@ -24,12 +24,12 @@ router.post('/register', async (req, res, next) => {
       });
     }
 
-    // Create user with specified role or default to 'user'
+    // Create user with specified role or default to 'customer'
     user = await User.create({
       username,
       email,
       password,
-      role: role || 'user'
+      role: role || 'customer'
     });
 
     // Generate JWT token
@@ -67,7 +67,7 @@ router.post('/login', async (req, res) => {
     // Find user with matching email and role if specified
     const query = { email };
     if (role) {
-      if (!['user', 'admin'].includes(role)) {
+      if (!['customer', 'petowner', 'admin'].includes(role)) {
         return res.status(400).json({ message: 'Invalid role specified' });
       }
       query.role = role;

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import LiveChat from './LiveChat';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -9,7 +8,6 @@ const Contact = () => {
     subject: '',
     message: ''
   });
-  const [showChat, setShowChat] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -165,14 +163,9 @@ const Contact = () => {
           <p style={{ marginBottom: '1rem', color: '#666' }}>
             Our support team is available to chat with you in real-time.
           </p>
-          <button 
-            className="btn" 
-            style={{ background: '#28a745' }}
-            onClick={() => setShowChat(true)}
-          >
+          <button className="btn" style={{ background: '#28a745' }}>
             💬 Start Live Chat
           </button>
-          {showChat && <LiveChat onClose={() => setShowChat(false)} />}
         </div>
       </div>
     </div>
