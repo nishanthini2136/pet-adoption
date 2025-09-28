@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './PetOwnerDashboard.css';
@@ -8,6 +8,7 @@ import './PetOwnerDashboard.css';
 const PetOwnerDashboard = () => {
   const { token, user } = useAuth();
   const [pets, setPets] = useState([]);
+  const [adoptionRequests, setAdoptionRequests] = useState([]);
   const [statistics, setStatistics] = useState({
     totalPets: 0,
     availablePets: 0,
@@ -17,8 +18,8 @@ const PetOwnerDashboard = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [showAddPetForm, setShowAddPetForm] = useState(false);
   const [showEditPetForm, setShowEditPetForm] = useState(false);
+  const [showAdoptionRequests, setShowAdoptionRequests] = useState(false);
   const [currentPet, setCurrentPet] = useState(null);
   const [petForm, setPetForm] = useState({
     name: '',
@@ -127,8 +128,7 @@ const PetOwnerDashboard = () => {
       const newPet = data.data;
       setPets(prevPets => [newPet, ...prevPets]); // Add to beginning of array
       
-      // Close the form and reset it
-      setShowAddPetForm(false);
+      // Reset the form
       resetForm();
       setError('');
       
@@ -386,9 +386,99 @@ const PetOwnerDashboard = () => {
         return;
       }
       setPets([]);
-    } finally {
       console.log('Finished fetchPets');
       setLoading(false);
+    }
+  };
+  const fetchAdoptionRequests = async () => {
+    try {
+      console.log('Fetching adoption requests...');
+      
+      if (!token) {
+        console.error('No authentication token found');
+        toast.error('Please log in to view adoption requests');
+        return;
+      }
+
+      const response = await fetch('http://localhost:5000/api/adoptions/owner-requests', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      });
+  
+      console.log('Adoption requests API response status:', response.status);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Adoption requests data:', data);
+        
+        // The backend returns { success: true, data: [...] }
+        const requests = data.data || [];
+        console.log(`Found ${requests.length} adoption requests`);
+        setAdoptionRequests(requests);
+        
+        // Update pending requests count in statistics
+        const pendingCount = requests.filter(req => req.status === 'Pending').length;
+        console.log(`Found ${pendingCount} pending requests`);
+        setStatistics(prev => ({
+          ...prev,
+          pendingRequests: pendingCount
+        }));
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.message || `HTTP ${response.status}: ${response.statusText}`;
+        console.error('Failed to fetch adoption requests:', errorMessage);
+        
+        if (response.status === 401) {
+          toast.error('Authentication failed. Please log in again.');
+        } else if (response.status === 403) {
+          toast.error('Access denied. Only pet owners can view adoption requests.');
+        } else {
+          toast.error(`Failed to load adoption requests: ${errorMessage}`);
+        }
+      }
+    } catch (err) {
+      console.error('Error in fetchAdoptionRequests:', err);
+      const errorMessage = err.message.includes('Failed to fetch') 
+        ? 'Unable to connect to server. Please check your connection.' 
+        : `Network error: ${err.message}`;
+      toast.error(errorMessage);
+    }
+  };
+
+  // Handle adoption request actions (approve/reject)
+  const handleAdoptionAction = async (adoptionId, action, ownerNotes = '') => {
+    try {
+      console.log(`${action} adoption request:`, adoptionId);
+      const response = await fetch(`http://localhost:5000/api/adoptions/${adoptionId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          status: action,
+          ownerNotes: ownerNotes
+        }),
+        credentials: 'include' // Important for cookies/sessions
+      });
+  
+      const data = await response.json();
+      
+      if (response.ok) {
+        toast.success(data.message || `Adoption request ${action.toLowerCase()} successfully!`);
+        
+        // Refresh both adoption requests and pets data
+        await Promise.all([fetchAdoptionRequests(), fetchPets()]);
+      } else {
+        console.error(`Failed to ${action.toLowerCase()} adoption request:`, data.message || 'Unknown error');
+        toast.error(data.message || `Failed to ${action.toLowerCase()} adoption request`);
+      }
+    } catch (err) {
+      console.error(`Error ${action.toLowerCase()}ing adoption request:`, err);
+      toast.error(`Failed to ${action.toLowerCase()} adoption request. Please try again.`);
     }
   };
 
@@ -396,9 +486,11 @@ const PetOwnerDashboard = () => {
   useEffect(() => {
     if (token && user && user.role === 'petowner') {
       fetchPets();
+      fetchAdoptionRequests();
     } else {
       // Clear pets if user is not a pet owner or not authenticated
       setPets([]);
+      setAdoptionRequests([]);
       setLoading(false);
     }
   }, [token, user?.id, user?.role]); // More specific dependencies
@@ -422,13 +514,6 @@ const PetOwnerDashboard = () => {
         }}>
           <button 
             className="btn" 
-            style={{ background: '#28a745' }}
-            onClick={() => setShowAddPetForm(true)}
-          >
-            Add New Pet
-          </button>
-          <button 
-            className="btn" 
             style={{ background: '#17a2b8' }}
             onClick={() => fetchPets()}
             disabled={loading}
@@ -438,167 +523,6 @@ const PetOwnerDashboard = () => {
           <button className="btn" style={{ background: '#ffc107' }}>Upload Documents</button>
           <button className="btn" style={{ background: '#6c757d' }}>Message Adopters</button>
         </div>
-        
-        {/* Add Pet Form */}
-        {showAddPetForm && (
-          <div style={{ 
-            position: 'fixed', 
-            top: 0, 
-            left: 0, 
-            right: 0, 
-            bottom: 0, 
-            backgroundColor: 'rgba(0,0,0,0.5)', 
-            display: 'flex', 
-            justifyContent: 'center', 
-            alignItems: 'center',
-            zIndex: 1000
-          }}>
-            <div style={{ 
-              background: 'white', 
-              padding: '2rem', 
-              borderRadius: '15px', 
-              width: '90%', 
-              maxWidth: '600px',
-              maxHeight: '90vh',
-              overflowY: 'auto'
-            }}>
-              <h3 style={{ marginBottom: '1rem' }}>Add New Pet</h3>
-              <form onSubmit={handleAddPet}>
-                <div style={{ marginBottom: '1rem' }}>
-                  <label style={{ display: 'block', marginBottom: '0.5rem' }}>Pet Name</label>
-                  <input 
-                    type="text" 
-                    name="name" 
-                    value={petForm.name} 
-                    onChange={handleInputChange} 
-                    style={{ width: '100%', padding: '0.5rem', borderRadius: '5px', border: '1px solid #ddd' }}
-                    required
-                  />
-                </div>
-                <div style={{ marginBottom: '1rem' }}>
-                  <label style={{ display: 'block', marginBottom: '0.5rem' }}>Gender</label>
-                  <select 
-                    name="gender" 
-                    value={petForm.gender} 
-                    onChange={handleInputChange} 
-                    style={{ width: '100%', padding: '0.5rem', borderRadius: '5px', border: '1px solid #ddd' }}
-                  >
-                    <option value="">Select Gender</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                  </select>
-                </div>
-                <div style={{ marginBottom: '1rem' }}>
-                  <label style={{ display: 'block', marginBottom: '0.5rem' }}>Size</label>
-                  <select 
-                    name="size" 
-                    value={petForm.size} 
-                    onChange={handleInputChange} 
-                    style={{ width: '100%', padding: '0.5rem', borderRadius: '5px', border: '1px solid #ddd' }}
-                  >
-                    <option value="">Select Size</option>
-                    <option value="Small">Small</option>
-                    <option value="Medium">Medium</option>
-                    <option value="Large">Large</option>
-                  </select>
-                </div>
-                <div style={{ marginBottom: '1rem' }}>
-                  <label style={{ display: 'block', marginBottom: '0.5rem' }}>Location</label>
-                  <input 
-                    type="text" 
-                    name="location" 
-                    value={petForm.location} 
-                    onChange={handleInputChange} 
-                    style={{ width: '100%', padding: '0.5rem', borderRadius: '5px', border: '1px solid #ddd' }}
-                    placeholder="City, State"
-                  />
-                </div>
-                <div style={{ marginBottom: '1rem' }}>
-                  <label style={{ display: 'block', marginBottom: '0.5rem' }}>Species</label>
-                  <input 
-                    type="text" 
-                    name="species" 
-                    value={petForm.species} 
-                    onChange={handleInputChange} 
-                    style={{ width: '100%', padding: '0.5rem', borderRadius: '5px', border: '1px solid #ddd' }}
-                    required
-                  />
-                </div>
-                <div style={{ marginBottom: '1rem' }}>
-                  <label style={{ display: 'block', marginBottom: '0.5rem' }}>Breed</label>
-                  <input 
-                    type="text" 
-                    name="breed" 
-                    value={petForm.breed} 
-                    onChange={handleInputChange} 
-                    style={{ width: '100%', padding: '0.5rem', borderRadius: '5px', border: '1px solid #ddd' }}
-                  />
-                </div>
-                <div style={{ marginBottom: '1rem' }}>
-                  <label style={{ display: 'block', marginBottom: '0.5rem' }}>Age</label>
-                  <input 
-                    type="text" 
-                    name="age" 
-                    value={petForm.age} 
-                    onChange={handleInputChange} 
-                    style={{ width: '100%', padding: '0.5rem', borderRadius: '5px', border: '1px solid #ddd' }}
-                  />
-                </div>
-                <div style={{ marginBottom: '1rem' }}>
-                  <label style={{ display: 'block', marginBottom: '0.5rem' }}>Description</label>
-                  <textarea 
-                    name="description" 
-                    value={petForm.description} 
-                    onChange={handleInputChange} 
-                    style={{ width: '100%', padding: '0.5rem', borderRadius: '5px', border: '1px solid #ddd', minHeight: '100px' }}
-                  />
-                </div>
-                <div style={{ marginBottom: '1rem' }}>
-                  <label style={{ display: 'block', marginBottom: '0.5rem' }}>Image URL</label>
-                  <input 
-                    type="text" 
-                    name="image" 
-                    value={petForm.image} 
-                    onChange={handleInputChange} 
-                    style={{ width: '100%', padding: '0.5rem', borderRadius: '5px', border: '1px solid #ddd' }}
-                    placeholder="https://example.com/image.jpg"
-                  />
-                </div>
-                <div style={{ marginBottom: '1rem' }}>
-                  <label style={{ display: 'block', marginBottom: '0.5rem' }}>Status</label>
-                  <select 
-                    name="status" 
-                    value={petForm.status} 
-                    onChange={handleInputChange} 
-                    style={{ width: '100%', padding: '0.5rem', borderRadius: '5px', border: '1px solid #ddd' }}
-                  >
-                    <option value="Available">Available</option>
-                    <option value="Pending">Pending</option>
-                    <option value="Adopted">Adopted</option>
-                  </select>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
-                  <button 
-                    type="button" 
-                    onClick={() => {
-                      setShowAddPetForm(false);
-                      resetForm();
-                    }}
-                    style={{ padding: '0.5rem 1rem', borderRadius: '5px', border: 'none', background: '#6c757d', color: 'white' }}
-                  >
-                    Cancel
-                  </button>
-                  <button 
-                    type="submit" 
-                    style={{ padding: '0.5rem 1rem', borderRadius: '5px', border: 'none', background: '#28a745', color: 'white' }}
-                  >
-                    Add Pet
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
         
         {/* Edit Pet Form */}
         {showEditPetForm && (
@@ -760,14 +684,124 @@ const PetOwnerDashboard = () => {
             </div>
           </div>
         )}
+<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+  {/* Adoption Requests */}
+  <div style={{ background: 'white', padding: '2rem', borderRadius: '15px', boxShadow: '0 5px 15px rgba(0,0,0,0.1)' }}>
+  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+    <h3 style={{ margin: 0, borderBottom: '2px solid #667eea', paddingBottom: '0.5rem' }}>
+      Adoption Requests ({adoptionRequests.length})
+    </h3>
+    <button 
+      onClick={fetchAdoptionRequests}
+      style={{
+        background: '#17a2b8',
+        color: 'white',
+        border: 'none',
+        padding: '0.5rem 1rem',
+        borderRadius: '5px',
+        cursor: 'pointer'
+      }}
+    >
+      Refresh
+    </button>
+  </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-          {/* Adoption Requests */}
-          <div style={{ background: 'white', padding: '2rem', borderRadius: '15px', boxShadow: '0 5px 15px rgba(0,0,0,0.1)' }}>
-            <h3 style={{ marginBottom: '1rem', borderBottom: '2px solid #667eea', paddingBottom: '0.5rem' }}>Adoption Requests</h3>
-            <p>No pending adoption requests.</p>
-
-          </div>
+  {adoptionRequests.length === 0 ? (
+    <div style={{ textAlign: 'center', padding: '2rem', color: '#6c757d' }}>
+      No adoption requests yet. When customers submit adoption applications for your pets, they will appear here.
+    </div>
+  ) : (
+    <div style={{ overflowX: 'auto' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <thead>
+          <tr style={{ backgroundColor: '#f7fafc', borderBottom: '1px solid #e2e8f0' }}>
+            <th style={{ padding: '0.75rem 1rem', textAlign: 'left', color: '#4a5568', fontWeight: '600', fontSize: '0.875rem' }}>Pet</th>
+            <th style={{ padding: '0.75rem 1rem', textAlign: 'left', color: '#4a5568', fontWeight: '600', fontSize: '0.875rem' }}>Applicant</th>
+            <th style={{ padding: '0.75rem 1rem', textAlign: 'left', color: '#4a5568', fontWeight: '600', fontSize: '0.875rem' }}>Status</th>
+            <th style={{ padding: '0.75rem 1rem', textAlign: 'left', color: '#4a5568', fontWeight: '600', fontSize: '0.875rem' }}>Date</th>
+            <th style={{ padding: '0.75rem 1rem', textAlign: 'left', color: '#4a5568', fontWeight: '600', fontSize: '0.875rem' }}>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {adoptionRequests.map(request => (
+            <tr key={request._id} style={{ borderBottom: '1px solid #e2e8f0' }}>
+              <td style={{ padding: '1rem', display: 'flex', alignItems: 'center' }}>
+                <img 
+                  src={request.pet?.imageUrl || 'https://via.placeholder.com/50?text=Pet'} 
+                  alt={request.pet?.name || 'Pet'} 
+                  style={{ width: '50px', height: '50px', borderRadius: '8px', objectFit: 'cover', marginRight: '1rem' }} 
+                />
+                <div>
+                  <div style={{ fontWeight: '500' }}>{request.pet?.name || 'Pet'}</div>
+                  <div style={{ fontSize: '0.8rem', color: '#718096' }}>{request.pet?.breed}</div>
+                </div>
+              </td>
+              <td style={{ padding: '1rem' }}>
+                <div style={{ fontWeight: '500' }}>{request.user?.username || 'Unknown'}</div>
+                <div style={{ fontSize: '0.8rem', color: '#718096' }}>{request.user?.email}</div>
+              </td>
+              <td style={{ padding: '1rem' }}>
+                <span style={{
+                  padding: '0.25rem 0.5rem',
+                  borderRadius: '9999px',
+                  backgroundColor: request.status === 'Approved' ? '#c6f6d5' : 
+                                request.status === 'Rejected' ? '#fed7d7' : 
+                                request.status === 'Completed' ? '#bee3f8' : '#feebc8',
+                  color: request.status === 'Approved' ? '#22543d' : 
+                        request.status === 'Rejected' ? '#9b2c2c' : 
+                        request.status === 'Completed' ? '#2a69ac' : '#9c4221',
+                  fontSize: '0.75rem',
+                  fontWeight: 'bold'
+                }}>
+                  {request.status}
+                </span>
+              </td>
+              <td style={{ padding: '1rem', color: '#718096', fontSize: '0.875rem' }}>
+                {new Date(request.createdAt).toLocaleDateString()}
+              </td>
+              <td style={{ padding: '1rem' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  {request.status === 'Pending' && (
+                    <>
+                      <button
+                        onClick={() => handleAdoptionAction(request._id, 'Approved')}
+                        style={{
+                          background: '#28a745',
+                          color: 'white',
+                          border: 'none',
+                          padding: '0.25rem 0.5rem',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '0.8rem'
+                        }}
+                      >
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => handleAdoptionAction(request._id, 'Rejected')}
+                        style={{
+                          background: '#dc3545',
+                          color: 'white',
+                          border: 'none',
+                          padding: '0.25rem 0.5rem',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '0.8rem'
+                        }}
+                      >
+                        Reject
+                      </button>
+                    </>
+                  )}
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )}
+</div>
 
           {/* Pet Management */}
           <div style={{ background: 'white', padding: '2rem', borderRadius: '15px', boxShadow: '0 5px 15px rgba(0,0,0,0.1)' }}>
@@ -802,26 +836,10 @@ const PetOwnerDashboard = () => {
               <div style={{ textAlign: 'center', padding: '2rem', color: '#666', background: '#f8f9fa', borderRadius: '10px', border: '2px dashed #dee2e6' }}>
                 <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🐾</div>
                 <p style={{ fontSize: '1.3rem', marginBottom: '1rem', fontWeight: 'bold', color: '#495057' }}>No pets added yet</p>
-                <p style={{ marginBottom: '1rem' }}>Your pet dashboard is empty. Start by adding your first pet!</p>
+                <p style={{ marginBottom: '1rem' }}>Your pet dashboard is empty.</p>
                 <p style={{ fontSize: '0.9rem', color: '#6c757d', fontStyle: 'italic', marginBottom: '1.5rem' }}>
-                  ✨ Only pets you add will appear here and be visible to customers for adoption.
+                  Please contact an administrator to add pets to your dashboard. They will be able to guide you through the process of adding pets to your dashboard.
                 </p>
-                <button 
-                  onClick={() => setShowAddPetForm(true)}
-                  style={{
-                    background: '#28a745',
-                    color: 'white',
-                    border: 'none',
-                    padding: '0.75rem 1.5rem',
-                    borderRadius: '25px',
-                    cursor: 'pointer',
-                    fontSize: '1rem',
-                    fontWeight: 'bold',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                  }}
-                >
-                  🐕 Add Your First Pet
-                </button>
               </div>
             ) : (
               pets.map(pet => (

@@ -125,6 +125,21 @@ const AdoptionForm = () => {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          phone: formData.phone,
+          address: formData.address,
+          city: formData.city,
+          state: formData.state,
+          zipCode: formData.zipCode,
+          homeEnvironment: formData.homeEnvironment,
+          previousPets: formData.previousPets,
+          reasonForAdoption: formData.reasonForAdoption,
+          timeAtHome: formData.timeAtHome,
+          otherPets: formData.otherPets,
+          children: formData.children,
+          landlordApproval: formData.landlordApproval,
           notes: `${formData.reasonForAdoption} - ${formData.homeEnvironment} home with ${formData.timeAtHome} availability`
         })
       });
@@ -221,6 +236,38 @@ const AdoptionForm = () => {
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  // Create a memoized version for checking if current step is valid without setting errors
+  const isCurrentStepValid = () => {
+    const stepFields = {
+      1: ['firstName', 'lastName', 'email', 'phone'],
+      2: ['address', 'city', 'state', 'zipCode'],
+      3: ['homeEnvironment', 'previousPets', 'reasonForAdoption', 'timeAtHome', 'otherPets', 'children', 'landlordApproval']
+    };
+
+    const currentFields = stepFields[formStep];
+    
+    // Check if all required fields are filled
+    const hasAllFields = currentFields.every(field => formData[field]?.trim());
+    
+    if (!hasAllFields) return false;
+
+    // Additional validation for specific steps
+    if (formStep === 1) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) return false;
+
+      const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+      if (!phoneRegex.test(formData.phone.replace(/[\s\-\(\)]/g, ''))) return false;
+    }
+
+    if (formStep === 2) {
+      const zipRegex = /^\d{5}(-\d{4})?$/;
+      if (!zipRegex.test(formData.zipCode)) return false;
+    }
+
+    return true;
   };
 
   if (submitSuccess) {
@@ -567,13 +614,12 @@ const AdoptionForm = () => {
               <button
                 type="submit"
                 className="nav-button submit"
-                disabled={!validateCurrentStep()}
+                disabled={!isCurrentStepValid()}
               >
                 Submit Application <FaPaw className="button-icon" />
               </button>
             )}
           </div>
-          
 
 
 

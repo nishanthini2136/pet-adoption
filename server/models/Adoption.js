@@ -11,18 +11,53 @@ const adoptionSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
+  petOwner: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
   status: {
     type: String,
-    enum: ['Pending', 'Approved', 'Rejected'],
+    enum: ['Pending', 'Approved', 'Rejected', 'Completed'],
     default: 'Pending'
+  },
+  applicationData: {
+    // Personal Information
+    firstName: { type: String, required: true },
+    lastName: { type: String, required: true },
+    email: { type: String, required: true },
+    phone: { type: String, required: true },
+    address: { type: String, required: true },
+    city: { type: String, required: true },
+    state: { type: String, required: true },
+    zipCode: { type: String, required: true },
+    
+    // Questionnaire
+    homeEnvironment: { type: String, required: true },
+    previousPets: { type: String, required: true },
+    reasonForAdoption: { type: String, required: true },
+    timeAtHome: { type: String, required: true },
+    otherPets: { type: String, required: true },
+    children: { type: String, required: true },
+    landlordApproval: { type: String, required: true }
   },
   adoptionDate: {
     type: Date,
     default: Date.now
   },
+  approvalDate: {
+    type: Date
+  },
+  completionDate: {
+    type: Date
+  },
   notes: {
     type: String,
     maxlength: [500, 'Notes cannot be more than 500 characters']
+  },
+  ownerNotes: {
+    type: String,
+    maxlength: [500, 'Owner notes cannot be more than 500 characters']
   }
 }, {
   timestamps: true

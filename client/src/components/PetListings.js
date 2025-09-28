@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaSearch, FaThLarge, FaList, FaEdit, FaTrash, FaSpinner, FaPaw } from 'react-icons/fa';
+import { FaSearch, FaThLarge, FaList, FaEdit, FaTrash, FaSpinner, FaPaw, FaHeart, FaMapMarkerAlt, FaFilter } from 'react-icons/fa';
 import { AuthContext } from '../contexts/AuthContext';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import './PetListings.css';
 
 const API_URL = 'http://localhost:5000/api';
 
@@ -139,78 +140,40 @@ const PetListings = () => {
   }
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
-      <h1 style={{ textAlign: 'center', marginBottom: '2rem' }}>Available Pets for Adoption</h1>
+    <div className="pet-listings-container">
+      <div className="hero-section">
+        <h1>Find Your Perfect Companion</h1>
+        <p>Discover loving pets waiting for their forever homes</p>
+      </div>
       
-      {/* Search and View Toggle */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        marginBottom: '2rem',
-        flexWrap: 'wrap',
-        gap: '1rem'
-      }}>
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          background: '#f8f9fa', 
-          borderRadius: '5px',
-          padding: '0.5rem 1rem',
-          flex: '1 1 300px',
-          maxWidth: '500px'
-        }}>
-          <FaSearch style={{ marginRight: '0.5rem', color: '#6c757d' }} />
+      {/* Search and Filter Section */}
+      <div className="search-filter-section">
+        <div className="search-container">
+          <FaSearch className="search-icon" />
           <input
             type="text"
             placeholder="Search pets by name or description..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            style={{
-              border: 'none',
-              background: 'transparent',
-              width: '100%',
-              outline: 'none',
-              fontSize: '1rem'
-            }}
+            className="search-input"
           />
         </div>
         
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <div className="view-toggle">
           <button
             onClick={() => setViewMode('grid')}
-            style={{
-              background: viewMode === 'grid' ? '#007bff' : '#f8f9fa',
-              color: viewMode === 'grid' ? 'white' : '#212529',
-              border: '1px solid #dee2e6',
-              padding: '0.5rem 1rem',
-              borderRadius: '5px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem'
-            }}
+            className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
           >
             <FaThLarge /> Grid
           </button>
           <button
             onClick={() => setViewMode('list')}
-            style={{
-              background: viewMode === 'list' ? '#007bff' : '#f8f9fa',
-              color: viewMode === 'list' ? 'white' : '#212529',
-              border: '1px solid #dee2e6',
-              padding: '0.5rem 1rem',
-              borderRadius: '5px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem'
-            }}
+            className={`view-btn ${viewMode === 'list' ? 'active' : ''}`}
           >
             <FaList /> List
           </button>
         </div>
       </div>
-      
       {/* Pet Listings */}
       {filteredPets.length === 0 ? (
         <div style={{ 

@@ -10,7 +10,7 @@ router.use(protect);
 // Adopt a pet
 router.post('/:petId', async (req, res) => {
   try {
-    const pet = await Pet.findById(req.params.petId);
+    const pet = await Pet.findById(req.params.petId).populate('owner');
     
     if (!pet) {
       return res.status(404).json({ message: 'Pet not found' });
@@ -33,23 +33,54 @@ router.post('/:petId', async (req, res) => {
       });
     }
 
-    // Create adoption request
+    // Extract application data from request body
+    const {
+      firstName, lastName, email, phone, address, city, state, zipCode,
+      homeEnvironment, previousPets, reasonForAdoption, timeAtHome, 
+      otherPets, children, landlordApproval, notes
+    } = req.body;
+
+    // Validate required fields
+    if (!firstName || !lastName || !email || !phone || !address || !city || !state || !zipCode ||
+        !homeEnvironment || !previousPets || !reasonForAdoption || !timeAtHome || 
+        !otherPets || !children || !landlordApproval) {
+      return res.status(400).json({ message: 'All application fields are required' });
+    }
+
+    // Create adoption request with detailed application data
     const adoption = await Adoption.create({
       pet: pet._id,
       user: req.user.id,
-      status: 'Pending'
+      petOwner: pet.owner._id,
+      status: 'Pending',
+      applicationData: {
+        firstName, lastName, email, phone, address, city, state, zipCode,
+        homeEnvironment, previousPets, reasonForAdoption, timeAtHome,
+        otherPets, children, landlordApproval
+      },
+      notes: notes || `${reasonForAdoption} - ${homeEnvironment} home with ${timeAtHome} availability`
     });
 
     // Update pet status to Pending
     pet.status = 'Pending';
     await pet.save();
 
+    // Populate the adoption data for response
+    const populatedAdoption = await Adoption.findById(adoption._id)
+      .populate('pet', 'name breed species imageUrl')
+      .populate('user', 'username email')
+      .populate('petOwner', 'username email');
+
     res.status(201).json({ 
       success: true, 
-      data: adoption 
+      data: populatedAdoption,
+      message: 'Adoption request submitted successfully! The pet owner will review your application.'
     });
   } catch (err) {
-    console.error(err);
+    console.error('Adoption request error:', err);
+    if (err.code === 11000) {
+      return res.status(400).json({ message: 'You already have an adoption request for this pet' });
+    }
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -79,12 +110,27 @@ router.get('/pet/:petId', async (req, res) => {
   }
 });
 
-// Get user's adopted pets
+// Get user's adoption requests (for customers)
+router.get('/my-requests', async (req, res) => {
+  try {
+    const adoptions = await Adoption.find({ user: req.user.id })
+      .populate('pet', 'name breed species imageUrl location status')
+      .populate('petOwner', 'username email')
+      .sort({ createdAt: -1 });
+
+    res.json({ success: true, data: adoptions });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get user's adopted pets (completed adoptions)
 router.get('/my-adoptions', async (req, res) => {
   try {
     const adoptions = await Adoption.find({ 
       user: req.user.id,
-      status: 'Approved'
+      status: { $in: ['Approved', 'Completed'] }
     })
     .populate({
       path: 'pet',
@@ -93,14 +139,24 @@ router.get('/my-adoptions', async (req, res) => {
         select: 'username email'
       }
     })
-    .sort({ adoptionDate: -1 });
+    .sort({ approvalDate: -1 });
 
-    const adoptedPets = adoptions.map(adoption => ({
-      ...adoption.pet.toObject(),
-      adoptionDate: adoption.adoptionDate
-    }));
+    res.json({ success: true, data: adoptions });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
-    res.json({ success: true, data: adoptedPets });
+// Get adoption requests for pet owner's pets
+router.get('/owner-requests', async (req, res) => {
+  try {
+    const adoptions = await Adoption.find({ petOwner: req.user.id })
+      .populate('pet', 'name breed species imageUrl location')
+      .populate('user', 'username email')
+      .sort({ createdAt: -1 });
+
+    res.json({ success: true, data: adoptions });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
@@ -110,14 +166,15 @@ router.get('/my-adoptions', async (req, res) => {
 // Update adoption status (for pet owners/admins)
 router.put('/:id/status', async (req, res) => {
   try {
-    const { status } = req.body;
+    const { status, ownerNotes } = req.body;
     
-    if (!['Approved', 'Rejected', 'Pending'].includes(status)) {
+    if (!['Approved', 'Rejected', 'Pending', 'Completed'].includes(status)) {
       return res.status(400).json({ message: 'Invalid status' });
     }
 
     const adoption = await Adoption.findById(req.params.id)
-      .populate('pet');
+      .populate('pet')
+      .populate('user', 'username email');
 
     if (!adoption) {
       return res.status(404).json({ message: 'Adoption request not found' });
@@ -130,8 +187,19 @@ router.put('/:id/status', async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to update this adoption request' });
     }
 
-    // Update adoption status
+    // Update adoption status and owner notes
     adoption.status = status;
+    if (ownerNotes) {
+      adoption.ownerNotes = ownerNotes;
+    }
+
+    // Set appropriate dates based on status
+    if (status === 'Approved' && adoption.status !== 'Approved') {
+      adoption.approvalDate = new Date();
+    } else if (status === 'Completed' && adoption.status !== 'Completed') {
+      adoption.completionDate = new Date();
+    }
+
     await adoption.save();
 
     // If approved, update pet status and adoptedBy
@@ -149,6 +217,55 @@ router.put('/:id/status', async (req, res) => {
         },
         { $set: { status: 'Rejected' } }
       );
+    } else if (status === 'Rejected') {
+      // If this was the only pending request, set pet back to Available
+      const otherPendingRequests = await Adoption.countDocuments({
+        pet: pet._id,
+        _id: { $ne: adoption._id },
+        status: 'Pending'
+      });
+
+      if (otherPendingRequests === 0) {
+        pet.status = 'Available';
+        pet.adoptedBy = undefined;
+        await pet.save();
+      }
+    }
+
+    // Populate the updated adoption for response
+    const updatedAdoption = await Adoption.findById(adoption._id)
+      .populate('pet', 'name breed species imageUrl')
+      .populate('user', 'username email')
+      .populate('petOwner', 'username email');
+
+    res.json({ 
+      success: true, 
+      data: updatedAdoption,
+      message: `Adoption request ${status.toLowerCase()} successfully`
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get detailed adoption request (for viewing application details)
+router.get('/:id', async (req, res) => {
+  try {
+    const adoption = await Adoption.findById(req.params.id)
+      .populate('pet', 'name breed species imageUrl location')
+      .populate('user', 'username email')
+      .populate('petOwner', 'username email');
+
+    if (!adoption) {
+      return res.status(404).json({ message: 'Adoption request not found' });
+    }
+
+    // Only the user, pet owner, or admin can view the detailed adoption request
+    if (adoption.user._id.toString() !== req.user.id && 
+        adoption.petOwner._id.toString() !== req.user.id && 
+        req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized to view this adoption request' });
     }
 
     res.json({ success: true, data: adoption });

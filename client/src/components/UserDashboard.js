@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getCurrentUser } from '../utils/auth';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-toastify';
 
 const UserDashboard = () => {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [adoptedPets, setAdoptedPets] = useState([]);
-  const [pendingAdoptions, setPendingAdoptions] = useState([]);
+  const [adoptionRequests, setAdoptionRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -15,15 +14,15 @@ const UserDashboard = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Fetch adopted pets
-        const [adoptedResponse, pendingResponse] = await Promise.all([
+        // Fetch adopted pets and adoption requests
+        const [adoptedResponse, requestsResponse] = await Promise.all([
           fetch('http://localhost:5000/api/adoptions/my-adoptions', {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
             }
           }),
-          fetch('http://localhost:5000/api/adoptions', {
+          fetch('http://localhost:5000/api/adoptions/my-requests', {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
@@ -32,7 +31,7 @@ const UserDashboard = () => {
         ]);
 
         const adoptedData = await adoptedResponse.json();
-        const pendingData = await pendingResponse.json();
+        const requestsData = await requestsResponse.json();
 
         if (adoptedResponse.ok) {
           setAdoptedPets(adoptedData.data || []);
@@ -40,10 +39,10 @@ const UserDashboard = () => {
           setError(adoptedData.message || 'Failed to fetch adopted pets');
         }
 
-        if (pendingResponse.ok) {
-          setPendingAdoptions(pendingData.data || []);
+        if (requestsResponse.ok) {
+          setAdoptionRequests(requestsData.data || []);
         } else {
-          console.error('Failed to fetch pending adoptions:', pendingData.message);
+          setError(requestsData.message || 'Failed to fetch adoption requests');
         }
       } catch (err) {
         setError('Error connecting to server');
@@ -60,13 +59,11 @@ const UserDashboard = () => {
     }
   }, [token]);
 
-  const currentUser = getCurrentUser();
-
   return (
     <div className="user-dashboard">
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
         <h1 style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          Welcome, {currentUser?.name || 'User'}! 🐾
+          Welcome, {user?.username || 'User'}! 🐾
         </h1>
 
         {loading ? (
@@ -157,22 +154,23 @@ const UserDashboard = () => {
               </div>
             </div>
 
-            {/* Pending Adoptions Section */}
-            {pendingAdoptions.length > 0 && (
+            {/* Adoption Requests Section */}
+            {adoptionRequests.length > 0 && (
                 <div style={{ background: 'white', padding: '2rem', borderRadius: '15px', boxShadow: '0 5px 15px rgba(0,0,0,0.1)', marginBottom: '2rem' }}>
-                  <h3 style={{ marginBottom: '1rem', borderBottom: '2px solid #667eea', paddingBottom: '0.5rem' }}>Pending Adoptions</h3>
+                  <h3 style={{ marginBottom: '1rem', borderBottom: '2px solid #667eea', paddingBottom: '0.5rem' }}>My Adoption Requests</h3>
                   <div style={{ overflowX: 'auto' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                       <thead>
                         <tr style={{ backgroundColor: '#f7fafc', borderBottom: '1px solid #e2e8f0' }}>
                           <th style={{ padding: '0.75rem 1rem', textAlign: 'left', color: '#4a5568', fontWeight: '600', fontSize: '0.875rem' }}>Pet</th>
+                          <th style={{ padding: '0.75rem 1rem', textAlign: 'left', color: '#4a5568', fontWeight: '600', fontSize: '0.875rem' }}>Owner</th>
                           <th style={{ padding: '0.75rem 1rem', textAlign: 'left', color: '#4a5568', fontWeight: '600', fontSize: '0.875rem' }}>Status</th>
                           <th style={{ padding: '0.75rem 1rem', textAlign: 'left', color: '#4a5568', fontWeight: '600', fontSize: '0.875rem' }}>Date</th>
                           <th style={{ padding: '0.75rem 1rem', textAlign: 'left', color: '#4a5568', fontWeight: '600', fontSize: '0.875rem' }}>Actions</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {pendingAdoptions.map(adoption => (
+                        {adoptionRequests.map(adoption => (
                           <tr key={adoption._id} style={{ borderBottom: '1px solid #e2e8f0' }}>
                             <td style={{ padding: '1rem', display: 'flex', alignItems: 'center' }}>
                               <img 
@@ -180,16 +178,24 @@ const UserDashboard = () => {
                                 alt={adoption.pet?.name || 'Pet'} 
                                 style={{ width: '50px', height: '50px', borderRadius: '8px', objectFit: 'cover', marginRight: '1rem' }} 
                               />
-                              <span style={{ fontWeight: '500' }}>{adoption.pet?.name || 'Pet'}</span>
+                              <div>
+                                <div style={{ fontWeight: '500' }}>{adoption.pet?.name || 'Pet'}</div>
+                                <div style={{ fontSize: '0.8rem', color: '#718096' }}>{adoption.pet?.breed}</div>
+                              </div>
+                            </td>
+                            <td style={{ padding: '1rem', color: '#4a5568', fontSize: '0.875rem' }}>
+                              {adoption.petOwner?.username || 'Unknown'}
                             </td>
                             <td style={{ padding: '1rem' }}>
                               <span style={{
                                 padding: '0.25rem 0.5rem',
                                 borderRadius: '9999px',
                                 backgroundColor: adoption.status === 'Approved' ? '#c6f6d5' : 
-                                              adoption.status === 'Rejected' ? '#fed7d7' : '#feebc8',
+                                              adoption.status === 'Rejected' ? '#fed7d7' : 
+                                              adoption.status === 'Completed' ? '#bee3f8' : '#feebc8',
                                 color: adoption.status === 'Approved' ? '#22543d' : 
-                                      adoption.status === 'Rejected' ? '#9b2c2c' : '#9c4221',
+                                      adoption.status === 'Rejected' ? '#9b2c2c' : 
+                                      adoption.status === 'Completed' ? '#2a69ac' : '#9c4221',
                                 fontSize: '0.75rem',
                                 fontWeight: 'bold'
                               }}>
@@ -208,13 +214,16 @@ const UserDashboard = () => {
                                     textDecoration: 'none',
                                     fontWeight: '500',
                                     fontSize: '0.875rem',
-                                    ':hover': {
-                                      textDecoration: 'underline'
-                                    }
+                                    marginRight: '1rem'
                                   }}
                                 >
-                                  View
+                                  View Pet
                                 </Link>
+                              )}
+                              {adoption.ownerNotes && (
+                                <span style={{ fontSize: '0.8rem', color: '#718096' }}>
+                                  Note: {adoption.ownerNotes}
+                                </span>
                               )}
                             </td>
                           </tr>
@@ -232,17 +241,33 @@ const UserDashboard = () => {
           <h3 style={{ marginBottom: '1rem', borderBottom: '2px solid #667eea', paddingBottom: '0.5rem' }}>Profile Information</h3>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
             <div>
-              <p><strong>Name:</strong> John Doe</p>
-              <p><strong>Email:</strong> john.doe@example.com</p>
-              <p><strong>Phone:</strong> +1 (555) 123-4567</p>
+              <p><strong>Username:</strong> {user?.username || 'N/A'}</p>
+              <p><strong>Email:</strong> {user?.email || 'N/A'}</p>
+              <p><strong>Role:</strong> {user?.role || 'Customer'}</p>
             </div>
             <div>
-              <p><strong>Address:</strong> 123 Main St, New York, NY 10001</p>
-              <p><strong>Member Since:</strong> January 2024</p>
-              <p><strong>Total Applications:</strong> {pendingAdoptions.length}</p>
+              <p><strong>Member Since:</strong> {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}</p>
+              <p><strong>Total Adoption Requests:</strong> {adoptionRequests.length}</p>
+              <p><strong>Adopted Pets:</strong> {adoptedPets.length}</p>
             </div>
           </div>
-          <button className="btn" style={{ marginTop: '1rem' }}>Update Profile</button>
+          <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+            <Link 
+              to="/pets" 
+              style={{
+                display: 'inline-block',
+                padding: '0.75rem 1.5rem',
+                backgroundColor: '#28a745',
+                color: 'white',
+                borderRadius: '8px',
+                textDecoration: 'none',
+                fontWeight: '500',
+                marginRight: '1rem'
+              }}
+            >
+              🐾 Find More Pets to Adopt
+            </Link>
+          </div>
         </div>
       </div>
     </div>

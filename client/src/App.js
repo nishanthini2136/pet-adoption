@@ -11,7 +11,7 @@ import PetDetails from './components/PetDetails';
 import AdoptionForm from './components/AdoptionForm';
 import UserDashboard from './components/UserDashboard';
 import AdminDashboard from './components/AdminDashboard';
-import PetOwnerDashboard from './components/PetOwnerDashboard';
+import PetOwnerDashboardEnhanced from './components/PetOwnerDashboardEnhanced';
 import Contact from './components/Contact';
 import PetArticles from './components/PetArticles';
 import ArticleDetail from './components/ArticleDetail';
@@ -112,7 +112,7 @@ function App() {
                 path="/petowner" 
                 element={
                   <ProtectedRoute requiredRole="petowner">
-                    <PetOwnerDashboard />
+                    <PetOwnerDashboardEnhanced />
                   </ProtectedRoute>
                 } 
               />

@@ -32,22 +32,47 @@ app.use((req, res, next) => {
 // Connect to MongoDB with improved options
 const connectDB = async () => {
   try {
+    console.log('Attempting to connect to MongoDB Atlas...');
+    console.log('Connection URI (masked):', process.env.MONGODB_URI.replace(/\/\/[^:]+:[^@]+@/, '//***:***@'));
+    
     const conn = await mongoose.connect(process.env.MONGODB_URI, {
-      serverSelectionTimeoutMS: 10000, // Increase timeout to 10s
+      serverSelectionTimeoutMS: 30000, // Increase timeout to 30s
       socketTimeoutMS: 45000,
+      connectTimeoutMS: 30000,
+      maxPoolSize: 10,
+      retryWrites: true,
+      w: 'majority'
     });
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
+    
+    console.log(`✅ MongoDB Connected Successfully!`);
+    console.log(`   Host: ${conn.connection.host}`);
+    console.log(`   Database: ${conn.connection.name}`);
+    console.log(`   Ready State: ${conn.connection.readyState}`);
+    
+    // Test the connection by counting documents
+    const Pet = require('./models/Pet');
+    const petCount = await Pet.countDocuments();
+    console.log(`   Total pets in database: ${petCount}`);
+    
   } catch (error) {
-    console.error('MongoDB connection error:', error.message);
-    // Retry the connection after 5 seconds
-    setTimeout(connectDB, 5000);
+    console.error('❌ MongoDB connection failed:', error.message);
+    
+    // Provide helpful troubleshooting information
+    if (error.message.includes('ENOTFOUND') || error.message.includes('ECONNREFUSED')) {
+      console.error('💡 Network issue: Check your internet connection and MongoDB Atlas network access settings');
+    } else if (error.message.includes('authentication failed')) {
+      console.error('💡 Authentication issue: Check your MongoDB Atlas username and password');
+    } else if (error.message.includes('SSL') || error.message.includes('TLS')) {
+      console.error('💡 SSL/TLS issue: This might be a network firewall or certificate issue');
+    }
+    
+    console.log('🔄 Retrying connection in 10 seconds...');
+    setTimeout(connectDB, 10000);
   }
 };
 
 // Initialize database connection
 connectDB();
-
-// Handle MongoDB connection events
 mongoose.connection.on('error', err => {
   console.error('MongoDB connection error:', err);
 });
