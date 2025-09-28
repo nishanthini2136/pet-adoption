@@ -77,8 +77,8 @@ const UserDashboard = () => {
               <h3 style={{ marginBottom: '1rem', borderBottom: '2px solid #667eea', paddingBottom: '0.5rem' }}>My Adopted Pets</h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1.5rem' }}>
                 {adoptedPets.length > 0 ? (
-                  adoptedPets.map(pet => (
-                    <div key={pet._id} className="pet-card" style={{ 
+                  adoptedPets.map(adoption => (
+                    <div key={adoption._id} className="pet-card" style={{ 
                       border: '1px solid #eee', 
                       borderRadius: '10px',
                       overflow: 'hidden',
@@ -86,17 +86,20 @@ const UserDashboard = () => {
                       boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
                     }}>
                       <img
-                        src={pet.imageUrl || 'https://via.placeholder.com/300x200?text=No+Image'}
-                        alt={pet.name}
+                        src={adoption.pet?.imageUrl || 'https://via.placeholder.com/300x200?text=No+Image'}
+                        alt={adoption.pet?.name || 'Pet'}
                         style={{ width: '100%', height: '180px', objectFit: 'cover' }}
+                        onError={(e) => {
+                          e.target.src = 'https://via.placeholder.com/300x200?text=No+Image';
+                        }}
                       />
                       <div style={{ padding: '1rem' }}>
-                        <h4 style={{ margin: '0.5rem 0', color: '#2d3748' }}>{pet.name}</h4>
+                        <h4 style={{ margin: '0.5rem 0', color: '#2d3748' }}>{adoption.pet?.name || 'Unknown Pet'}</h4>
                         <p style={{ color: '#718096', margin: '0.25rem 0', fontSize: '0.9rem' }}>
-                          {pet.breed} • {pet.age}
+                          {adoption.pet?.breed || 'Unknown'} • {adoption.pet?.age || 'Unknown age'}
                         </p>
                         <p style={{ color: '#4a5568', margin: '0.5rem 0', fontSize: '0.9rem' }}>
-                          Adopted on: {new Date(pet.adoptionDate || pet.createdAt).toLocaleDateString()}
+                          Adopted on: {new Date(adoption.approvalDate || adoption.createdAt).toLocaleDateString()}
                         </p>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem' }}>
                           <span style={{ 
@@ -110,7 +113,7 @@ const UserDashboard = () => {
                             Adopted
                           </span>
                           <Link 
-                            to={`/pets/${pet._id}`} 
+                            to={`/pet/${adoption.pet?._id}`} 
                             style={{
                               color: '#4299e1',
                               textDecoration: 'none',
@@ -128,7 +131,9 @@ const UserDashboard = () => {
                     </div>
                   ))
                 ) : (
-                  <p style={{ textAlign: 'center', padding: '2rem' }}>No available pets found.</p>
+                  <p style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>
+                    You haven't adopted any pets yet. <Link to="/pets" style={{ color: '#4299e1' }}>Browse available pets</Link> to start your adoption journey!
+                  </p>
                 )}
               </div>
               <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
@@ -208,7 +213,7 @@ const UserDashboard = () => {
                             <td style={{ padding: '1rem' }}>
                               {adoption.pet && (
                                 <Link 
-                                  to={`/pets/${adoption.pet._id}`} 
+                                  to={`/pet/${adoption.pet._id}`} 
                                   style={{
                                     color: '#4299e1',
                                     textDecoration: 'none',

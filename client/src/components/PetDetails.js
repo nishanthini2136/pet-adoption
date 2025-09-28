@@ -16,14 +16,17 @@ const PetDetails = () => {
       try {
         setLoading(true);
         setError(null);
-
+        
+        console.log('Fetching pet details for ID:', id);
         const response = await fetch(`http://localhost:5000/api/pets/${id}`);
+        console.log('Response status:', response.status);
 
         if (!response.ok) {
-          throw new Error('Failed to fetch pet details');
+          throw new Error(`Failed to fetch pet details: ${response.status}`);
         }
 
         const data = await response.json();
+        console.log('Pet data received:', data);
         setPet(data.data);
       } catch (err) {
         console.error('Error fetching pet details:', err);
@@ -33,7 +36,12 @@ const PetDetails = () => {
       }
     };
 
-    fetchPetDetails();
+    if (id) {
+      fetchPetDetails();
+    } else {
+      setError('No pet ID provided');
+      setLoading(false);
+    }
   }, [id]);
 
   const handleAdoptClick = () => {
@@ -60,7 +68,13 @@ const PetDetails = () => {
     <div className="pet-details-container">
       <div className="pet-details-card">
         <div className="pet-image">
-          <img src={pet.imageUrl} alt={pet.name} />
+          <img 
+            src={pet.imageUrl || 'https://via.placeholder.com/400x300?text=No+Image'} 
+            alt={pet.name} 
+            onError={(e) => {
+              e.target.src = 'https://via.placeholder.com/400x300?text=No+Image';
+            }}
+          />
           <span className={`status-badge ${pet.status.toLowerCase()}`}>{pet.status}</span>
         </div>
         
@@ -92,7 +106,6 @@ const PetDetails = () => {
               <span className="value">{pet.location}</span>
             </div>
           </div>
-          
           <div className="pet-description">
             <h3>About {pet.name}</h3>
             <p>{pet.description}</p>
@@ -100,9 +113,8 @@ const PetDetails = () => {
           
           <div className="owner-info">
             <h3>Contact Information</h3>
-            <p><strong>Owner:</strong> {pet.owner.name}</p>
-            <p><strong>Email:</strong> {pet.owner.email}</p>
-            <p><strong>Phone:</strong> {pet.owner.phone}</p>
+            <p><strong>Owner:</strong> {pet.owner?.username || 'Not available'}</p>
+            <p><strong>Email:</strong> {pet.owner?.email || 'Not available'}</p>
           </div>
           
           <div className="action-buttons">
