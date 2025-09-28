@@ -39,7 +39,7 @@ const Navigation = () => {
           {isAuthenticated() ? (
             <>
               {user?.role === 'admin' ? (
-                <li><Link to="/admin-dashboard" className={location.pathname === '/admin-dashboard' ? 'active' : ''}>Admin Dashboard</Link></li>
+                <li><Link to="/admin" className={location.pathname === '/admin' ? 'active' : ''}>Admin Dashboard</Link></li>
               ) : user?.role === 'petowner' ? (
                 <li><Link to="/petowner" className={location.pathname === '/petowner' ? 'active' : ''}>Dashboard</Link></li>
               ) : (

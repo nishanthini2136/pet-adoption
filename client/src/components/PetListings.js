@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaSearch, FaThLarge, FaList, FaEdit, FaTrash, FaSpinner, FaPaw, FaHeart, FaMapMarkerAlt, FaFilter } from 'react-icons/fa';
+import { FaSearch, FaThLarge, FaList, FaEdit, FaTrash, FaSpinner, FaPaw, FaHeart, FaMapMarkerAlt, FaFilter, FaTimes } from 'react-icons/fa';
 import { AuthContext } from '../contexts/AuthContext';
 import axios from 'axios';
 import { toast } from 'react-toastify';
@@ -81,23 +81,28 @@ const PetListings = () => {
 
   // Handle view pet details
   const handleViewDetails = (petId) => {
-    navigate(`/pets/${petId}`);
+    navigate(`/pet/${petId}`);
   };
 
   // Filter pets based on search and filters
   const filteredPets = Array.isArray(pets) ? pets.filter(pet => {
     if (!pet) return false;
     
-    const matchesSearch = !searchQuery || 
-      (pet.name && pet.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (pet.description && pet.description.toLowerCase().includes(searchQuery.toLowerCase()));
+    // Enhanced search logic - search in multiple fields
+    const searchTerm = searchQuery.toLowerCase().trim();
+    const matchesSearch = !searchTerm || 
+      (pet.name && pet.name.toLowerCase().includes(searchTerm)) ||
+      (pet.description && pet.description.toLowerCase().includes(searchTerm)) ||
+      (pet.breed && pet.breed.toLowerCase().includes(searchTerm)) ||
+      (pet.species && pet.species.toLowerCase().includes(searchTerm)) ||
+      (pet.location && pet.location.toLowerCase().includes(searchTerm));
     
     const matchesFilters = 
       (!filters.species || pet.species === filters.species) &&
-      (!filters.breed || (pet.breed && pet.breed.includes(filters.breed))) &&
-      (!filters.age || (pet.age && pet.age.includes(filters.age))) &&
+      (!filters.breed || (pet.breed && pet.breed.toLowerCase().includes(filters.breed.toLowerCase()))) &&
+      (!filters.age || (pet.age && pet.age.toString().includes(filters.age))) &&
       (!filters.gender || pet.gender === filters.gender) &&
-      (!filters.location || (pet.location && pet.location.includes(filters.location))) &&
+      (!filters.location || (pet.location && pet.location.toLowerCase().includes(filters.location.toLowerCase()))) &&
       (!filters.size || pet.size === filters.size);
 
     return matchesSearch && matchesFilters;
@@ -152,11 +157,20 @@ const PetListings = () => {
           <FaSearch className="search-icon" />
           <input
             type="text"
-            placeholder="Search pets by name or description..."
+            placeholder="Search pets by name, breed, species, location, or description..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="search-input"
           />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="clear-search-btn"
+              title="Clear search"
+            >
+              <FaTimes />
+            </button>
+          )}
         </div>
         
         <div className="view-toggle">
@@ -174,6 +188,37 @@ const PetListings = () => {
           </button>
         </div>
       </div>
+
+      {/* Search Results Info */}
+      {searchQuery && (
+        <div style={{
+          background: '#f8f9fa',
+          padding: '1rem 1.5rem',
+          borderRadius: '10px',
+          marginBottom: '1.5rem',
+          border: '1px solid #e9ecef'
+        }}>
+          <p style={{ margin: 0, color: '#495057' }}>
+            <strong>{filteredPets.length}</strong> pet{filteredPets.length !== 1 ? 's' : ''} found for "{searchQuery}"
+            {filteredPets.length > 0 && (
+              <button
+                onClick={() => setSearchQuery('')}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#007bff',
+                  cursor: 'pointer',
+                  marginLeft: '1rem',
+                  textDecoration: 'underline'
+                }}
+              >
+                Clear search
+              </button>
+            )}
+          </p>
+        </div>
+      )}
+
       {/* Pet Listings */}
       {filteredPets.length === 0 ? (
         <div style={{ 

@@ -8,6 +8,12 @@ const PetEvents = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [registrationForm, setRegistrationForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    attendees: 1
+  });
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -17,6 +23,23 @@ const PetEvents = () => {
       month: 'long', 
       day: 'numeric' 
     });
+  };
+
+  // Function to check if event is within the next month
+  const isEventWithinMonth = (eventDate) => {
+    const today = new Date();
+    const oneMonthFromNow = new Date();
+    oneMonthFromNow.setMonth(today.getMonth() + 1);
+    
+    const eventDateObj = new Date(eventDate);
+    return eventDateObj >= today && eventDateObj <= oneMonthFromNow;
+  };
+
+  // Function to generate upcoming dates
+  const getUpcomingDate = (daysFromNow) => {
+    const date = new Date();
+    date.setDate(date.getDate() + daysFromNow);
+    return date.toISOString().split('T')[0];
   };
 
   const handleViewDetails = (eventId) => {
@@ -34,6 +57,51 @@ const PetEvents = () => {
   const handleCloseModals = () => {
     setShowDetailsModal(false);
     setShowRegisterModal(false);
+    // Reset form when closing
+    setRegistrationForm({
+      name: '',
+      email: '',
+      phone: '',
+      attendees: 1
+    });
+  };
+
+  const handleFormChange = (e) => {
+    const { name, value } = e.target;
+    setRegistrationForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleRegistrationSubmit = (e) => {
+    e.preventDefault();
+    
+    // Basic validation
+    if (!registrationForm.name || !registrationForm.email || !registrationForm.phone) {
+      alert('Please fill in all required fields.');
+      return;
+    }
+    
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(registrationForm.email)) {
+      alert('Please enter a valid email address.');
+      return;
+    }
+    
+    // Success message
+    alert(`Registration successful for ${selectedEvent.title}! 
+    
+Registration Details:
+- Name: ${registrationForm.name}
+- Email: ${registrationForm.email}
+- Phone: ${registrationForm.phone}
+- Attendees: ${registrationForm.attendees}
+
+You will receive a confirmation email shortly.`);
+    
+    handleCloseModals();
   };
 
   const events = [
@@ -41,7 +109,7 @@ const PetEvents = () => {
       id: 1,
       title: "Pet Adoption Day",
       type: "adoption",
-      date: "2024-02-15",
+      date: getUpcomingDate(5),
       time: "10:00 AM - 4:00 PM",
       location: "Central Park",
       description: "Join us for a special adoption event featuring dogs, cats, and other pets looking for their forever homes.",
@@ -56,7 +124,7 @@ const PetEvents = () => {
       id: 2,
       title: "Pet Training Workshop",
       type: "workshop",
-      date: "2024-02-20",
+      date: getUpcomingDate(10),
       time: "2:00 PM - 5:00 PM",
       location: "Community Center",
       description: "Learn essential training techniques from professional dog trainers. Bring your pet for hands-on practice.",
@@ -71,7 +139,7 @@ const PetEvents = () => {
       id: 3,
       title: "Pet Health Seminar",
       type: "seminar",
-      date: "2024-02-25",
+      date: getUpcomingDate(15),
       time: "6:00 PM - 8:00 PM",
       location: "Veterinary Clinic",
       description: "Expert veterinarians will discuss common health issues, nutrition, and preventive care for pets.",
@@ -86,7 +154,7 @@ const PetEvents = () => {
       id: 4,
       title: "Pet Photography Session",
       type: "activity",
-      date: "2024-03-01",
+      date: getUpcomingDate(20),
       time: "11:00 AM - 3:00 PM",
       location: "Botanical Gardens",
       description: "Professional pet photographers will capture beautiful moments with your furry friends.",
@@ -101,7 +169,7 @@ const PetEvents = () => {
       id: 5,
       title: "Pet Grooming Workshop",
       type: "workshop",
-      date: "2024-03-05",
+      date: getUpcomingDate(25),
       time: "1:00 PM - 4:00 PM",
       location: "Pet Grooming Salon",
       description: "Learn proper grooming techniques and tips for maintaining your pet's coat and hygiene.",
@@ -116,7 +184,7 @@ const PetEvents = () => {
       id: 6,
       title: "Pet Social Meetup",
       type: "social",
-      date: "2024-03-10",
+      date: getUpcomingDate(28),
       time: "3:00 PM - 6:00 PM",
       location: "Dog Park",
       description: "A fun social gathering for pets and their owners. Great opportunity for socialization.",
@@ -138,9 +206,10 @@ const PetEvents = () => {
     { id: 'social', name: 'Social Events' }
   ];
 
-  const filteredEvents = selectedFilter === 'all' 
-    ? events 
-    : events.filter(event => event.type === selectedFilter);
+  // Filter events by type and within next month
+  const filteredEvents = events
+    .filter(event => isEventWithinMonth(event.date))
+    .filter(event => selectedFilter === 'all' || event.type === selectedFilter);
 
 
   const getRegistrationStatus = (registered, capacity) => {
@@ -187,30 +256,39 @@ const PetEvents = () => {
             <h2>Register for {selectedEvent.title}</h2>
             <p>Please fill out the form below to register for this event.</p>
             
-            <form style={{ marginTop: '1rem' }}>
+            <form onSubmit={handleRegistrationSubmit} style={{ marginTop: '1rem' }}>
               <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Name</label>
+                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Name *</label>
                 <input 
                   type="text" 
-                  style={{ width: '100%', padding: '0.5rem', borderRadius: '5px', border: '1px solid #ddd' }} 
+                  name="name"
+                  value={registrationForm.name}
+                  onChange={handleFormChange}
+                  placeholder="Enter your full name"
                   required 
                 />
               </div>
               
               <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Email</label>
+                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Email *</label>
                 <input 
                   type="email" 
-                  style={{ width: '100%', padding: '0.5rem', borderRadius: '5px', border: '1px solid #ddd' }} 
+                  name="email"
+                  value={registrationForm.email}
+                  onChange={handleFormChange}
+                  placeholder="Enter your email address"
                   required 
                 />
               </div>
               
               <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Phone</label>
+                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Phone *</label>
                 <input 
                   type="tel" 
-                  style={{ width: '100%', padding: '0.5rem', borderRadius: '5px', border: '1px solid #ddd' }} 
+                  name="phone"
+                  value={registrationForm.phone}
+                  onChange={handleFormChange}
+                  placeholder="Enter your phone number"
                   required 
                 />
               </div>
@@ -219,23 +297,18 @@ const PetEvents = () => {
                 <label style={{ display: 'block', marginBottom: '0.5rem' }}>Number of Attendees</label>
                 <input 
                   type="number" 
+                  name="attendees"
                   min="1" 
                   max="5" 
-                  defaultValue="1" 
-                  style={{ width: '100%', padding: '0.5rem', borderRadius: '5px', border: '1px solid #ddd' }} 
+                  value={registrationForm.attendees}
+                  onChange={handleFormChange}
                   required 
                 />
               </div>
               
               <button 
                 type="submit" 
-                className="btn" 
-                style={{ width: '100%', background: '#28a745', marginTop: '1rem' }}
-                onClick={(e) => {
-                  e.preventDefault();
-                  alert('Registration successful! You will receive a confirmation email shortly.');
-                  handleCloseModals();
-                }}
+                className="btn"
               >
                 Complete Registration
               </button>
@@ -248,6 +321,17 @@ const PetEvents = () => {
         <div className="events-header">
           <h1>Pet Events & Activities</h1>
           <p>Join our community events, workshops, and adoption days</p>
+          <div style={{ 
+            background: '#e3f2fd', 
+            padding: '1rem', 
+            borderRadius: '8px', 
+            marginTop: '1rem',
+            border: '1px solid #2196f3'
+          }}>
+            <p style={{ margin: 0, color: '#1565c0', fontWeight: '500' }}>
+              📅 Showing events scheduled within the next month from today ({new Date().toLocaleDateString()})
+            </p>
+          </div>
         </div>
 
         {/* Event Filters */}
@@ -275,7 +359,7 @@ const PetEvents = () => {
             <div className="event-details">
               <div className="detail-item">
                 <span className="detail-label">📅 Date:</span>
-                <span className="detail-value">February 15, 2024</span>
+                <span className="detail-value">{formatDate(getUpcomingDate(5))}</span>
               </div>
               <div className="detail-item">
                 <span className="detail-label">⏰ Time:</span>
@@ -291,7 +375,12 @@ const PetEvents = () => {
               </div>
             </div>
             <div className="event-actions">
-              <button className="register-btn">Register Now</button>
+              <button 
+                className="register-btn"
+                onClick={() => handleRegister(1)}
+              >
+                Register Now
+              </button>
               <button className="share-btn">Share Event</button>
             </div>
           </div>
@@ -306,7 +395,24 @@ const PetEvents = () => {
 
         {/* Events Grid */}
         <div className="events-grid">
-          {filteredEvents.slice(1).map(event => {
+          {filteredEvents.length === 0 ? (
+            <div style={{
+              textAlign: 'center',
+              padding: '3rem',
+              background: '#f8f9fa',
+              borderRadius: '15px',
+              border: '2px dashed #dee2e6',
+              gridColumn: '1 / -1'
+            }}>
+              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📅</div>
+              <h3 style={{ color: '#6c757d', marginBottom: '1rem' }}>No Events Within Next Month</h3>
+              <p style={{ color: '#6c757d' }}>
+                There are currently no {selectedFilter === 'all' ? '' : selectedFilter + ' '}events scheduled within the next month.
+                <br />Check back soon for upcoming events!
+              </p>
+            </div>
+          ) : (
+            filteredEvents.slice(1).map(event => {
             const registrationStatus = getRegistrationStatus(event.registered, event.capacity);
             
             return (
@@ -375,14 +481,15 @@ const PetEvents = () => {
                 </div>
               </div>
             );
-          })}
+          })
+          )}
         </div>
 
         {/* Event Calendar */}
         <div className="event-calendar">
-          <h3>Upcoming Events Calendar</h3>
+          <h3>Upcoming Events Calendar (Next Month)</h3>
           <div className="calendar-grid">
-            {events.slice(0, 6).map(event => (
+            {events.filter(event => isEventWithinMonth(event.date)).slice(0, 6).map(event => (
               <div key={event.id} className="calendar-item">
                 <div className="calendar-date">
                   <span className="date-day">{new Date(event.date).getDate()}</span>
