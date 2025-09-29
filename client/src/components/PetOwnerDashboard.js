@@ -19,6 +19,7 @@ const PetOwnerDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showEditPetForm, setShowEditPetForm] = useState(false);
+  const [showAddPetForm, setShowAddPetForm] = useState(false);
   const [showAdoptionRequests, setShowAdoptionRequests] = useState(false);
   const [currentPet, setCurrentPet] = useState(null);
   const [petForm, setPetForm] = useState({
@@ -128,9 +129,10 @@ const PetOwnerDashboard = () => {
       const newPet = data.data;
       setPets(prevPets => [newPet, ...prevPets]); // Add to beginning of array
       
-      // Reset the form
+      // Reset the form and close modal
       resetForm();
       setError('');
+      setShowAddPetForm(false);
       
       // Show detailed success message
       toast.success(`🎉 "${petData.name}" has been added to your pets and is now visible to customers!`, {
@@ -666,29 +668,234 @@ const PetOwnerDashboard = () => {
             </div>
           </div>
         )}
+
+        {/* Add Pet Form */}
+        {showAddPetForm && (
+          <div style={{ 
+            position: 'fixed', 
+            top: 0, 
+            left: 0, 
+            right: 0, 
+            bottom: 0, 
+            backgroundColor: 'rgba(0,0,0,0.5)', 
+            display: 'flex', 
+            justifyContent: 'center', 
+            alignItems: 'center',
+            zIndex: 1000
+          }}>
+            <div style={{ 
+              background: 'white', 
+              padding: '2rem', 
+              borderRadius: '15px', 
+              width: '90%', 
+              maxWidth: '600px',
+              maxHeight: '90vh',
+              overflowY: 'auto'
+            }}>
+              <h3 style={{ marginBottom: '1rem', color: '#28a745' }}>➕ Add New Pet</h3>
+              <form onSubmit={handleAddPet}>
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Pet Name *</label>
+                  <input 
+                    type="text" 
+                    name="name" 
+                    value={petForm.name} 
+                    onChange={handleInputChange} 
+                    style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '2px solid #ddd', fontSize: '1rem' }}
+                    placeholder="Enter pet's name"
+                    required
+                  />
+                </div>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Species *</label>
+                    <select 
+                      name="species" 
+                      value={petForm.species} 
+                      onChange={handleInputChange} 
+                      style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '2px solid #ddd', fontSize: '1rem' }}
+                      required
+                    >
+                      <option value="">Select Species</option>
+                      <option value="Dog">Dog</option>
+                      <option value="Cat">Cat</option>
+                      <option value="Bird">Bird</option>
+                      <option value="Rabbit">Rabbit</option>
+                      <option value="Fish">Fish</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Breed</label>
+                    <input 
+                      type="text" 
+                      name="breed" 
+                      value={petForm.breed} 
+                      onChange={handleInputChange} 
+                      style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '2px solid #ddd', fontSize: '1rem' }}
+                      placeholder="Enter breed"
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Age</label>
+                    <input 
+                      type="text" 
+                      name="age" 
+                      value={petForm.age} 
+                      onChange={handleInputChange} 
+                      style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '2px solid #ddd', fontSize: '1rem' }}
+                      placeholder="e.g. 2 years"
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Gender</label>
+                    <select 
+                      name="gender" 
+                      value={petForm.gender} 
+                      onChange={handleInputChange} 
+                      style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '2px solid #ddd', fontSize: '1rem' }}
+                    >
+                      <option value="">Select Gender</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Size</label>
+                    <select 
+                      name="size" 
+                      value={petForm.size} 
+                      onChange={handleInputChange} 
+                      style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '2px solid #ddd', fontSize: '1rem' }}
+                    >
+                      <option value="">Select Size</option>
+                      <option value="Small">Small</option>
+                      <option value="Medium">Medium</option>
+                      <option value="Large">Large</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Location</label>
+                  <input 
+                    type="text" 
+                    name="location" 
+                    value={petForm.location} 
+                    onChange={handleInputChange} 
+                    style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '2px solid #ddd', fontSize: '1rem' }}
+                    placeholder="City, State"
+                  />
+                </div>
+
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Image URL *</label>
+                  <input 
+                    type="url" 
+                    name="image" 
+                    value={petForm.image} 
+                    onChange={handleInputChange} 
+                    style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '2px solid #ddd', fontSize: '1rem' }}
+                    placeholder="https://example.com/pet-image.jpg"
+                    required
+                  />
+                </div>
+
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Description</label>
+                  <textarea 
+                    name="description" 
+                    value={petForm.description} 
+                    onChange={handleInputChange} 
+                    style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '2px solid #ddd', fontSize: '1rem', minHeight: '100px', resize: 'vertical' }}
+                    placeholder="Tell us about this pet's personality, habits, and special needs..."
+                  />
+                </div>
+
+                <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      setShowAddPetForm(false);
+                      resetForm();
+                    }}
+                    style={{
+                      background: '#6c757d',
+                      color: 'white',
+                      border: 'none',
+                      padding: '0.75rem 1.5rem',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontSize: '1rem'
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit"
+                    style={{
+                      background: '#28a745',
+                      color: 'white',
+                      border: 'none',
+                      padding: '0.75rem 1.5rem',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontSize: '1rem',
+                      fontWeight: 'bold'
+                    }}
+                  >
+                    ➕ Add Pet
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
         {/* Pet Management */}
         <div style={{ background: 'white', padding: '2rem', borderRadius: '15px', boxShadow: '0 5px 15px rgba(0,0,0,0.1)', marginBottom: '2rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <h3 style={{ borderBottom: '2px solid #667eea', paddingBottom: '0.5rem', margin: 0 }}>
                 My Pets {pets.length > 0 && `(${pets.length})`}
               </h3>
-              {pets.length > 0 && (
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <button 
-                  onClick={() => fetchPets()}
-                  disabled={loading}
+                  onClick={() => setShowAddPetForm(true)}
                   style={{
-                    background: '#17a2b8',
+                    background: '#28a745',
                     color: 'white',
                     border: 'none',
                     padding: '0.5rem 1rem',
                     borderRadius: '5px',
                     cursor: 'pointer',
-                    fontSize: '0.8rem'
+                    fontSize: '0.8rem',
+                    fontWeight: 'bold'
                   }}
                 >
-                  {loading ? 'Refreshing...' : '🔄 Refresh'}
+                  ➕ Add Pet
                 </button>
-              )}
+                {pets.length > 0 && (
+                  <button 
+                    onClick={() => fetchPets()}
+                    disabled={loading}
+                    style={{
+                      background: '#17a2b8',
+                      color: 'white',
+                      border: 'none',
+                      padding: '0.5rem 1rem',
+                      borderRadius: '5px',
+                      cursor: 'pointer',
+                      fontSize: '0.8rem'
+                    }}
+                  >
+                    {loading ? 'Refreshing...' : '🔄 Refresh'}
+                  </button>
+                )}
+              </div>
             </div>
             
             {loading && pets.length === 0 ? (
@@ -699,10 +906,25 @@ const PetOwnerDashboard = () => {
               <div style={{ textAlign: 'center', padding: '2rem', color: '#666', background: '#f8f9fa', borderRadius: '10px', border: '2px dashed #dee2e6' }}>
                 <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🐾</div>
                 <p style={{ fontSize: '1.3rem', marginBottom: '1rem', fontWeight: 'bold', color: '#495057' }}>No pets added yet</p>
-                <p style={{ marginBottom: '1rem' }}>Your pet dashboard is empty.</p>
+                <p style={{ marginBottom: '1rem' }}>Start building your pet portfolio!</p>
                 <p style={{ fontSize: '0.9rem', color: '#6c757d', fontStyle: 'italic', marginBottom: '1.5rem' }}>
-                  Please contact an administrator to add pets to your dashboard. They will be able to guide you through the process of adding pets to your dashboard.
+                  Click the "➕ Add Pet" button above to add your first pet. Once added, your pets will be visible to customers looking to adopt.
                 </p>
+                <button 
+                  onClick={() => setShowAddPetForm(true)}
+                  style={{
+                    background: '#28a745',
+                    color: 'white',
+                    border: 'none',
+                    padding: '0.75rem 1.5rem',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '1rem',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  ➕ Add Your First Pet
+                </button>
               </div>
             ) : (
               pets.map(pet => (
