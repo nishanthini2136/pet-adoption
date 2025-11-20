@@ -46,6 +46,21 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
   return children;
 };
 
+// Restricted Route Component (blocks certain roles)
+const RestrictedRoute = ({ children, blockedRoles = [] }) => {
+  const { user, loading } = useAuth();
+  
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (user && blockedRoles.includes(user.role)) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+};
+
 // Public Route Component
 const PublicRoute = ({ children, restricted = false }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -127,11 +142,27 @@ function App() {
                 } 
               />
               
-              {/* Public Routes */}
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/articles" element={<PetArticles />} />
-              <Route path="/article/:id" element={<ArticleDetail />} />
-              <Route path="/events" element={<PetEvents />} />
+              {/* Restricted Routes - Block admin and petowner access */}
+              <Route path="/contact" element={
+                <RestrictedRoute blockedRoles={['admin', 'petowner']}>
+                  <Contact />
+                </RestrictedRoute>
+              } />
+              <Route path="/articles" element={
+                <RestrictedRoute blockedRoles={['admin', 'petowner']}>
+                  <PetArticles />
+                </RestrictedRoute>
+              } />
+              <Route path="/article/:id" element={
+                <RestrictedRoute blockedRoles={['admin', 'petowner']}>
+                  <ArticleDetail />
+                </RestrictedRoute>
+              } />
+              <Route path="/events" element={
+                <RestrictedRoute blockedRoles={['admin', 'petowner']}>
+                  <PetEvents />
+                </RestrictedRoute>
+              } />
               
               {/* 404 Route - Keep this last */}
               <Route path="*" element={<Navigate to="/" replace />} />

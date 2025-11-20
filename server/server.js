@@ -5,6 +5,7 @@ const dotenv = require('dotenv');
 const authRoutes = require('./routes/auth');
 const petsRoutes = require('./routes/pets');
 const adoptionRoutes = require('./routes/adoption');
+const adminRoutes = require('./routes/admin');
 
 dotenv.config();
 
@@ -86,6 +87,7 @@ mongoose.connection.on('disconnected', () => {
 app.use('/api/auth', authRoutes);
 app.use('/api/pets', petsRoutes);
 app.use('/api/adoptions', adoptionRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

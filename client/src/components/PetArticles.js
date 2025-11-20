@@ -12,7 +12,7 @@ const PetArticles = () => {
       title: "How to Prepare Your Home for a New Pet",
       category: "adoption",
       excerpt: "Essential tips for creating a safe and welcoming environment for your new furry friend. Learn about pet-proofing, essential supplies, and creating a comfortable space.",
-      image: "https://images.unsplash.com/photo-1552053831-71594a27632d?w=400&h=300&fit=crop",
+      image: "https://images.unsplash.com/photo-1552053831-71594a27632d?w=800&auto=format&fit=crop&q=80",
       readTime: "5 min read",
       date: "2024-01-15",
       author: "Dr. Sarah Johnson",
@@ -25,7 +25,7 @@ const PetArticles = () => {
       title: "Understanding Pet Nutrition: A Complete Guide",
       category: "care",
       excerpt: "Learn about proper nutrition for different types of pets and how to choose the right food. Discover the importance of balanced diets and feeding schedules.",
-      image: "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400&h=300&fit=crop",
+      image: "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=800&auto=format&fit=crop&q=80",
       readTime: "8 min read",
       date: "2024-01-12",
       author: "Dr. Michael Chen",
@@ -38,7 +38,7 @@ const PetArticles = () => {
       title: "Training Tips for First-Time Pet Owners",
       category: "training",
       excerpt: "Basic training techniques that will help you build a strong bond with your pet. From basic commands to behavioral training, we cover it all.",
-      image: "https://images.unsplash.com/photo-1546527868-ccb7ee7dfa6a?w=400&h=300&fit=crop",
+      image: "https://images.unsplash.com/photo-1546527868-ccb7ee7dfa6a?w=800&auto=format&fit=crop&q=80",
       readTime: "6 min read",
       date: "2024-01-10",
       author: "Trainer Lisa Rodriguez",
@@ -51,7 +51,7 @@ const PetArticles = () => {
       title: "The Benefits of Pet Adoption vs. Buying",
       category: "adoption",
       excerpt: "Why adopting a pet from a shelter is often the best choice for both you and the animal. Discover the emotional and practical benefits of adoption.",
-      image: "https://images.unsplash.com/photo-1547407139-3c921a66005c?w=400&h=300&fit=crop",
+      image: "https://images.unsplash.com/photo-1547407139-3c921a66005c?w=800&auto=format&fit=crop&q=80",
       readTime: "4 min read",
       date: "2024-01-08",
       author: "Shelter Director Tom Wilson",
@@ -64,7 +64,7 @@ const PetArticles = () => {
       title: "Pet Health: Common Issues and Prevention",
       category: "health",
       excerpt: "Learn about common health issues in pets and how to prevent them through proper care. Early detection and prevention strategies for pet owners.",
-      image: "https://images.unsplash.com/photo-1589941013453-ec89f33b5e95?w=400&h=300&fit=crop",
+      image: "https://images.unsplash.com/photo-1589941013453-ec89f33b5e95?w=800&auto=format&fit=crop&q=80",
       readTime: "7 min read",
       date: "2024-01-05",
       author: "Dr. Emily Davis",
@@ -77,7 +77,7 @@ const PetArticles = () => {
       title: "Creating a Pet-Friendly Garden",
       category: "lifestyle",
       excerpt: "Transform your outdoor space into a safe and enjoyable environment for your pets. Learn about pet-safe plants and garden design tips.",
-      image: "https://images.unsplash.com/photo-1513360371669-4adf3dd7dff8?w=400&h=300&fit=crop",
+      image: "https://images.unsplash.com/photo-1513360371669-4adf3dd7dff8?w=800&auto=format&fit=crop&q=80",
       readTime: "5 min read",
       date: "2024-01-03",
       author: "Garden Expert Maria Garcia",
@@ -148,7 +148,7 @@ const PetArticles = () => {
           </div>
           <div className="featured-image">
             <PetImage 
-              src="https://images.unsplash.com/photo-1552053831-71594a27632d?w=400&h=300&fit=crop" 
+              src="https://images.unsplash.com/photo-1552053831-71594a27632d?w=800&auto=format&fit=crop&q=80" 
               alt="Golden Retriever" 
               className="featured-pet-image"
             />

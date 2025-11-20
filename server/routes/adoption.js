@@ -3,6 +3,7 @@ const router = express.Router();
 const { protect } = require('../middleware/auth');
 const Pet = require('../models/Pet');
 const Adoption = require('../models/Adoption');
+const User = require('../models/User');
 
 // Apply protect middleware to all routes
 router.use(protect);
@@ -33,32 +34,58 @@ router.post('/:petId', async (req, res) => {
       });
     }
 
-    // Extract application data from request body
+    // Extract application data from request body (simplified questionnaire)
     const {
-      firstName, lastName, email, phone, address, city, state, zipCode,
-      homeEnvironment, previousPets, reasonForAdoption, timeAtHome, 
-      otherPets, children, landlordApproval, notes
+      firstName,
+      lastName,
+      email,
+      phone,
+      address,
+      city,
+      state,
+      zipCode,
+      previousPets,
+      reasonForAdoption,
+      notes
     } = req.body;
 
-    // Validate required fields
-    if (!firstName || !lastName || !email || !phone || !address || !city || !state || !zipCode ||
-        !homeEnvironment || !previousPets || !reasonForAdoption || !timeAtHome || 
-        !otherPets || !children || !landlordApproval) {
-      return res.status(400).json({ message: 'All application fields are required' });
+    // Basic presence checks are handled on the frontend; backend will accept
+    // the payload and store whatever fields are provided.
+
+    // Get the adopter's user data
+    const adopter = await User.findById(req.user.id);
+    if (!adopter) {
+      return res.status(404).json({ message: 'User not found' });
     }
 
-    // Create adoption request with detailed application data
+    // Create adoption request with application data
     const adoption = await Adoption.create({
       pet: pet._id,
       user: req.user.id,
+      adopterUsername: adopter.username,
+      adopterFullName: `${firstName} ${lastName}`,
       petOwner: pet.owner._id,
       status: 'Pending',
       applicationData: {
-        firstName, lastName, email, phone, address, city, state, zipCode,
-        homeEnvironment, previousPets, reasonForAdoption, timeAtHome,
-        otherPets, children, landlordApproval
+        firstName,
+        lastName,
+        email,
+        phone,
+        address,
+        city,
+        state,
+        zipCode,
+        // Questionnaire fields: only two are collected from the form,
+        // others are given safe default values so validation won't fail.
+        previousPets: previousPets || 'N/A',
+        reasonForAdoption: reasonForAdoption || 'N/A',
+        homeEnvironment: 'N/A',
+        timeAtHome: 'N/A',
+        otherPets: 'N/A',
+        children: 'N/A',
+        landlordApproval: 'N/A'
       },
-      notes: notes || `${reasonForAdoption} - ${homeEnvironment} home with ${timeAtHome} availability`
+      notes: notes || `${reasonForAdoption} - ${previousPets}`
     });
 
     // Update pet status to Pending

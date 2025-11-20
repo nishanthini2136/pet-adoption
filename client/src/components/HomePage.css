@@ -29,6 +29,17 @@
   margin-right: auto;
 }
 
+.hero-actions {
+  display: inline-flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-actions .btn {
+  margin: 0;
+}
+
 /* Search Section */
 .search-section {
   background: white;
@@ -133,6 +144,11 @@
   color: #666;
   line-height: 1.6;
   margin-bottom: 1.5rem;
+}
+
+.featured-actions {
+  margin-top: 2rem;
+  text-align: center;
 }
 
 /* Quick Links */

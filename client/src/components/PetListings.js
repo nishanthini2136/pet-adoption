@@ -262,7 +262,9 @@ const PetListings = () => {
                 borderRadius: '10px',
                 overflow: 'hidden',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                display: viewMode === 'list' ? 'flex' : 'block'
+                display: 'flex',
+                flexDirection: viewMode === 'list' ? 'row' : 'column',
+                height: '100%'
               }}
             >
               <div style={{
@@ -286,7 +288,9 @@ const PetListings = () => {
               
               <div style={{ 
                 padding: '1.5rem',
-                flex: viewMode === 'list' ? 1 : 'none'
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column'
               }}>
                 <div style={{ 
                   display: 'flex', 
@@ -332,7 +336,7 @@ const PetListings = () => {
                   display: 'flex', 
                   justifyContent: 'space-between',
                   alignItems: 'center',
-                  marginTop: '1.5rem',
+                  marginTop: 'auto',
                   gap: '0.5rem'
                 }}>
                   <button 
@@ -348,7 +352,7 @@ const PetListings = () => {
                       display: 'flex',
                       alignItems: 'center',
                       gap: '0.5rem',
-                      flex: '1'
+                      flex: 1
                     }}
                   >
                     View Details
@@ -367,7 +371,7 @@ const PetListings = () => {
                         display: 'flex',
                         alignItems: 'center',
                         gap: '0.5rem',
-                        flex: '1',
+                        flex: 1,
                         justifyContent: 'center'
                       }}
                     >
@@ -380,6 +384,7 @@ const PetListings = () => {
           ))}
         </div>
       )}
+
     </div>
   );
 };

@@ -51,7 +51,7 @@ const Contact = () => {
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
         <h1 style={{ textAlign: 'center', marginBottom: '2rem' }}>Contact Us</h1>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '2rem' }}>
           {/* Contact Form */}
           <div style={{ background: 'white', padding: '2rem', borderRadius: '15px', boxShadow: '0 5px 15px rgba(0,0,0,0.1)' }}>
             <h3 style={{ marginBottom: '1rem', borderBottom: '2px solid #667eea', paddingBottom: '0.5rem' }}>Send us a Message</h3>
@@ -111,30 +111,6 @@ const Contact = () => {
             </form>
           </div>
 
-          {/* Contact Information */}
-          <div style={{ background: 'white', padding: '2rem', borderRadius: '15px', boxShadow: '0 5px 15px rgba(0,0,0,0.1)' }}>
-            <h3 style={{ marginBottom: '1rem', borderBottom: '2px solid #667eea', paddingBottom: '0.5rem' }}>Get in Touch</h3>
-            
-            <div style={{ marginBottom: '2rem' }}>
-              <h4 style={{ marginBottom: '0.5rem' }}>📍 Address</h4>
-              <p>123 Rescue Lane<br />New York, NY 10001</p>
-            </div>
-            
-            <div style={{ marginBottom: '2rem' }}>
-              <h4 style={{ marginBottom: '0.5rem' }}>📞 Phone</h4>
-              <p>+1 (555) 123-4567</p>
-            </div>
-            
-            <div style={{ marginBottom: '2rem' }}>
-              <h4 style={{ marginBottom: '0.5rem' }}>✉️ Email</h4>
-              <p>info@petadopt.org</p>
-            </div>
-            
-            <div style={{ marginBottom: '2rem' }}>
-              <h4 style={{ marginBottom: '0.5rem' }}>🕒 Hours</h4>
-              <p>Monday-Friday: 9AM-6PM<br />Saturday: 10AM-4PM<br />Sunday: Closed</p>
-            </div>
-          </div>
         </div>
 
         {/* FAQ Section */}

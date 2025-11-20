@@ -56,9 +56,9 @@ const AdoptionForm = () => {
     }
     
     // ZIP code validation
-    const zipRegex = /^\d{5}(-\d{4})?$/;
+    const zipRegex = /^\d{6}$/;
     if (!formData.zipCode || !zipRegex.test(formData.zipCode)) {
-      newErrors.zipCode = 'Please enter a valid ZIP code';
+      newErrors.zipCode = 'Please enter a valid 6-digit ZIP code';
     }
     
     // Required fields validation
@@ -70,7 +70,7 @@ const AdoptionForm = () => {
     });
     
     // Questionnaire validation
-    const questionnaireFields = ['homeEnvironment', 'previousPets', 'reasonForAdoption', 'timeAtHome', 'otherPets', 'children', 'landlordApproval'];
+    const questionnaireFields = ['previousPets', 'reasonForAdoption'];
     questionnaireFields.forEach(field => {
       if (!formData[field]) {
         newErrors[field] = 'Please select an option';
@@ -133,14 +133,9 @@ const AdoptionForm = () => {
           city: formData.city,
           state: formData.state,
           zipCode: formData.zipCode,
-          homeEnvironment: formData.homeEnvironment,
           previousPets: formData.previousPets,
           reasonForAdoption: formData.reasonForAdoption,
-          timeAtHome: formData.timeAtHome,
-          otherPets: formData.otherPets,
-          children: formData.children,
-          landlordApproval: formData.landlordApproval,
-          notes: `${formData.reasonForAdoption} - ${formData.homeEnvironment} home with ${formData.timeAtHome} availability`
+          notes: `${formData.reasonForAdoption} - ${formData.previousPets}`
         })
       });
       
@@ -203,7 +198,7 @@ const AdoptionForm = () => {
     const stepFields = {
       1: ['firstName', 'lastName', 'email', 'phone'],
       2: ['address', 'city', 'state', 'zipCode'],
-      3: ['homeEnvironment', 'previousPets', 'reasonForAdoption', 'timeAtHome', 'otherPets', 'children', 'landlordApproval']
+      3: ['previousPets', 'reasonForAdoption']
     };
 
     const currentFields = stepFields[formStep];
@@ -228,9 +223,9 @@ const AdoptionForm = () => {
     }
 
     if (formStep === 2) {
-      const zipRegex = /^\d{5}(-\d{4})?$/;
+      const zipRegex = /^\d{6}$/;
       if (!zipRegex.test(formData.zipCode)) {
-        newErrors.zipCode = 'Please enter a valid ZIP code';
+        newErrors.zipCode = 'Please enter a valid 6-digit ZIP code';
       }
     }
 
@@ -243,7 +238,7 @@ const AdoptionForm = () => {
     const stepFields = {
       1: ['firstName', 'lastName', 'email', 'phone'],
       2: ['address', 'city', 'state', 'zipCode'],
-      3: ['homeEnvironment', 'previousPets', 'reasonForAdoption', 'timeAtHome', 'otherPets', 'children', 'landlordApproval']
+      3: ['previousPets', 'reasonForAdoption']
     };
 
     const currentFields = stepFields[formStep];
@@ -263,7 +258,7 @@ const AdoptionForm = () => {
     }
 
     if (formStep === 2) {
-      const zipRegex = /^\d{5}(-\d{4})?$/;
+      const zipRegex = /^\d{6}$/;
       if (!zipRegex.test(formData.zipCode)) return false;
     }
 
@@ -427,25 +422,6 @@ const AdoptionForm = () => {
             
             <div className="form-group">
               <label className="form-label">
-                What type of home environment do you have?
-              </label>
-              <select
-                name="homeEnvironment"
-                value={formData.homeEnvironment}
-                onChange={handleChange}
-                className={`form-select ${errors.homeEnvironment ? 'error' : ''}`}
-              >
-                <option value="">Select...</option>
-                <option value="apartment">Apartment</option>
-                <option value="house">House</option>
-                <option value="condo">Condo</option>
-                <option value="townhouse">Townhouse</option>
-              </select>
-              {errors.homeEnvironment && <span className="error-text">{errors.homeEnvironment}</span>}
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">
                 Have you owned pets before?
               </label>
               <select
@@ -478,77 +454,6 @@ const AdoptionForm = () => {
                 <option value="other">Other</option>
               </select>
               {errors.reasonForAdoption && <span className="error-text">{errors.reasonForAdoption}</span>}
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">
-                How much time will you spend at home with the pet?
-              </label>
-              <select
-                name="timeAtHome"
-                value={formData.timeAtHome}
-                onChange={handleChange}
-                className={`form-select ${errors.timeAtHome ? 'error' : ''}`}
-              >
-                <option value="">Select...</option>
-                <option value="full-time">Full-time</option>
-                <option value="part-time">Part-time</option>
-                <option value="weekends">Weekends only</option>
-                <option value="evenings">Evenings only</option>
-              </select>
-              {errors.timeAtHome && <span className="error-text">{errors.timeAtHome}</span>}
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">
-                Do you have other pets?
-              </label>
-              <select
-                name="otherPets"
-                value={formData.otherPets}
-                onChange={handleChange}
-                className={`form-select ${errors.otherPets ? 'error' : ''}`}
-              >
-                <option value="">Select...</option>
-                <option value="yes">Yes</option>
-                <option value="no">No</option>
-              </select>
-              {errors.otherPets && <span className="error-text">{errors.otherPets}</span>}
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">
-                Do you have children?
-              </label>
-              <select
-                name="children"
-                value={formData.children}
-                onChange={handleChange}
-                className={`form-select ${errors.children ? 'error' : ''}`}
-              >
-                <option value="">Select...</option>
-                <option value="yes">Yes</option>
-                <option value="no">No</option>
-              </select>
-              {errors.children && <span className="error-text">{errors.children}</span>}
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">
-                Do you have landlord approval (if renting)?
-              </label>
-              <select
-                name="landlordApproval"
-                value={formData.landlordApproval}
-                onChange={handleChange}
-                className={`form-select ${errors.landlordApproval ? 'error' : ''}`}
-              >
-                <option value="">Select...</option>
-                <option value="yes">Yes</option>
-                <option value="no">No</option>
-                <option value="not-applicable">Not applicable (I own)</option>
-              </select>
-              {errors.landlordApproval && <span className="error-text">{errors.landlordApproval}</span>}
             </div>
           </div>
         );

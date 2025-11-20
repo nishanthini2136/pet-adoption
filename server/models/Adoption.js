@@ -11,6 +11,14 @@ const adoptionSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
+  adopterUsername: {
+    type: String,
+    required: true
+  },
+  adopterFullName: {
+    type: String,
+    required: true
+  },
   petOwner: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -31,15 +39,10 @@ const adoptionSchema = new mongoose.Schema({
     city: { type: String, required: true },
     state: { type: String, required: true },
     zipCode: { type: String, required: true },
-    
-    // Questionnaire
-    homeEnvironment: { type: String, required: true },
+
+    // Questionnaire (simplified)
     previousPets: { type: String, required: true },
-    reasonForAdoption: { type: String, required: true },
-    timeAtHome: { type: String, required: true },
-    otherPets: { type: String, required: true },
-    children: { type: String, required: true },
-    landlordApproval: { type: String, required: true }
+    reasonForAdoption: { type: String, required: true }
   },
   adoptionDate: {
     type: Date,

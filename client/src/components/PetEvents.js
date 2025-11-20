@@ -17,12 +17,21 @@ const PetEvents = () => {
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
+    return date.toLocaleDateString('en-IN', { 
       weekday: 'long', 
       year: 'numeric', 
       month: 'long', 
       day: 'numeric' 
     });
+  };
+
+  // Format price in Indian Rupees
+  const formatPrice = (price) => {
+    if (price === 'Free') return 'Free';
+    // Convert dollar to INR (assuming 1 USD = 83 INR)
+    const usdAmount = parseFloat(price.replace(/[^0-9.-]+/g, ''));
+    const inrAmount = Math.round(usdAmount * 83);
+    return `₹${inrAmount.toLocaleString('en-IN')}`;
   };
 
   // Function to check if event is within the next month
@@ -132,7 +141,7 @@ You will receive a confirmation email shortly.`);
       organizer: "Professional Pet Trainers",
       capacity: 20,
       registered: 18,
-      price: "$25",
+      price: "₹2,075",
       tags: ["training", "workshop", "dogs"]
     },
     {
@@ -147,7 +156,7 @@ You will receive a confirmation email shortly.`);
       organizer: "City Veterinary Association",
       capacity: 40,
       registered: 25,
-      price: "$15",
+      price: "₹1,245",
       tags: ["health", "seminar", "veterinary"]
     },
     {
@@ -162,7 +171,7 @@ You will receive a confirmation email shortly.`);
       organizer: "Pet Photography Studio",
       capacity: 30,
       registered: 22,
-      price: "$30",
+      price: "₹2,490",
       tags: ["photography", "activity", "fun"]
     },
     {
@@ -177,7 +186,7 @@ You will receive a confirmation email shortly.`);
       organizer: "Grooming Experts",
       capacity: 15,
       registered: 12,
-      price: "$20",
+      price: "₹1,660",
       tags: ["grooming", "workshop", "care"]
     },
     {
@@ -236,7 +245,7 @@ You will receive a confirmation email shortly.`);
             <p><strong>Time:</strong> {selectedEvent.time}</p>
             <p><strong>Location:</strong> {selectedEvent.location}</p>
             <p><strong>Organizer:</strong> {selectedEvent.organizer}</p>
-            <p><strong>Price:</strong> {selectedEvent.price}</p>
+            <p><strong>Price:</strong> {formatPrice(selectedEvent.price)}</p>
             <p><strong>Capacity:</strong> {selectedEvent.registered}/{selectedEvent.capacity}</p>
             <p>{selectedEvent.description}</p>
             <div className="event-tags" style={{ marginTop: '1rem' }}>
@@ -423,62 +432,61 @@ You will receive a confirmation email shortly.`);
                     alt={event.title}
                     className="event-pet-image"
                   />
-                  <div className="event-price">{event.price}</div>
-                </div>
-                <div className="event-content">
-                  <div className="event-type">{event.type}</div>
-                  <h3 className="event-title">{event.title}</h3>
-                  <p className="event-description">{event.description}</p>
-                  
-                  <div className="event-info">
-                    <div className="info-item">
-                      <span className="info-label">📅</span>
-                      <span>{formatDate(event.date)}</span>
-                    </div>
-                    <div className="info-item">
-                      <span className="info-label">⏰</span>
-                      <span>{event.time}</span>
-                    </div>
-                    <div className="info-item">
-                      <span className="info-label">📍</span>
-                      <span>{event.location}</span>
-                    </div>
-                    <div className="info-item">
-                      <span className="info-label">👥</span>
-                      <span>{event.registered}/{event.capacity}</span>
-                    </div>
                   </div>
+                  <div className="event-content">
+                    <div className="event-type">{event.type}</div>
+                    <h3 className="event-title">{event.title}</h3>
+                    <p className="event-description">{event.description}</p>
+                    
+                    <div className="event-info">
+                      <div className="info-item">
+                        <span className="info-label">📅</span>
+                        <span>{formatDate(event.date)}</span>
+                      </div>
+                      <div className="info-item">
+                        <span className="info-label">⏰</span>
+                        <span>{event.time}</span>
+                      </div>
+                      <div className="info-item">
+                        <span className="info-label">📍</span>
+                        <span>{event.location}</span>
+                      </div>
+                      <div className="info-item">
+                        <span className="info-label">👥</span>
+                        <span>{event.registered}/{event.capacity}</span>
+                      </div>
+                    </div>
 
-                  <div className="event-status">
-                    <span 
-                      className="status-badge"
-                      style={{ backgroundColor: registrationStatus.color }}
-                    >
-                      {registrationStatus.status}
-                    </span>
-                  </div>
+                    <div className="event-status">
+                      <span 
+                        className="status-badge"
+                        style={{ backgroundColor: registrationStatus.color }}
+                      >
+                        {registrationStatus.status}
+                      </span>
+                    </div>
 
-                  <div className="event-tags">
-                    {event.tags.map(tag => (
-                      <span key={tag} className="event-tag">{tag}</span>
-                    ))}
-                  </div>
+                    <div className="event-tags">
+                      {event.tags.map(tag => (
+                        <span key={tag} className="event-tag">{tag}</span>
+                      ))}
+                    </div>
 
-                  <div className="event-actions">
-                    <button 
-                      className="event-register-btn" 
-                      onClick={() => handleRegister(event.id)}
-                    >
-                      Register
-                    </button>
-                    <button 
-                      className="event-details-btn"
-                      onClick={() => handleViewDetails(event.id)}
-                    >
-                      Details
-                    </button>
+                    <div className="event-actions">
+                      <button 
+                        className="event-register-btn" 
+                        onClick={() => handleRegister(event.id)}
+                      >
+                        Register
+                      </button>
+                      <button 
+                        className="event-details-btn"
+                        onClick={() => handleViewDetails(event.id)}
+                      >
+                        Details
+                      </button>
+                    </div>
                   </div>
-                </div>
               </div>
             );
           })

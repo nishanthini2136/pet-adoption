@@ -27,14 +27,14 @@ const Navigation = () => {
           {(!isAuthenticated() || (user?.role !== 'petowner' && user?.role !== 'admin')) && (
             <li><Link to="/pets" className={location.pathname === '/pets' ? 'active' : ''}>Browse Pets</Link></li>
           )}
-          {/* Hide Articles and Events for Pet Owners */}
-          {user?.role !== 'petowner' && (
+          {/* Hide Articles, Events, and Contact for Pet Owners and Admins */}
+          {user?.role !== 'petowner' && user?.role !== 'admin' && (
             <>
               <li><Link to="/articles" className={location.pathname === '/articles' ? 'active' : ''}>Articles</Link></li>
               <li><Link to="/events" className={location.pathname === '/events' ? 'active' : ''}>Events</Link></li>
+              <li><Link to="/contact" className={location.pathname === '/contact' ? 'active' : ''}>Contact</Link></li>
             </>
           )}
-          <li><Link to="/contact" className={location.pathname === '/contact' ? 'active' : ''}>Contact</Link></li>
           
           {isAuthenticated() ? (
             <>

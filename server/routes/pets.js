@@ -3,7 +3,6 @@ const router = express.Router();
 const { protect } = require('../middleware/auth');
 const Pet = require('../models/Pet');
 
-// Get all pets (for admin)
 router.get('/admin', protect, async (req, res) => {
   try {
     // Check if user is admin
