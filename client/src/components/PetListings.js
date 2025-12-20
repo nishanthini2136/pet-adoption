@@ -7,7 +7,7 @@ import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './PetListings.css';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = `${process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000'}/api`;
 
 const PetListings = () => {
   const [pets, setPets] = useState([]);

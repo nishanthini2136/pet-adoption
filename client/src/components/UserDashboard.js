@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-toastify';
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
+
 const UserDashboard = () => {
   const { token, user } = useAuth();
   const [adoptedPets, setAdoptedPets] = useState([]);
@@ -16,13 +18,13 @@ const UserDashboard = () => {
       try {
         // Fetch adopted pets and adoption requests
         const [adoptedResponse, requestsResponse] = await Promise.all([
-          fetch('http://localhost:5000/api/adoptions/my-adoptions', {
+          fetch(`${API_BASE_URL}/api/adoptions/my-adoptions`, {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
             }
           }),
-          fetch('http://localhost:5000/api/adoptions/my-requests', {
+          fetch(`${API_BASE_URL}/api/adoptions/my-requests`, {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'

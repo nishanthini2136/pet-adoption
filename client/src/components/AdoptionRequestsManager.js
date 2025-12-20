@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-toastify';
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
+
 const AdoptionRequestsManager = () => {
   const { token } = useAuth();
   const [adoptionRequests, setAdoptionRequests] = useState([]);
@@ -13,7 +15,7 @@ const AdoptionRequestsManager = () => {
     try {
       setLoading(true);
       console.log('Fetching adoption requests...');
-      const response = await fetch('http://localhost:5000/api/adoptions/owner-requests', {
+      const response = await fetch(`${API_BASE_URL}/api/adoptions/owner-requests`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -39,7 +41,7 @@ const AdoptionRequestsManager = () => {
   const handleAdoptionAction = async (adoptionId, action, ownerNotes = '') => {
     try {
       console.log(`${action} adoption request:`, adoptionId);
-      const response = await fetch(`http://localhost:5000/api/adoptions/${adoptionId}/status`, {
+      const response = await fetch(`${API_BASE_URL}/api/adoptions/${adoptionId}/status`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

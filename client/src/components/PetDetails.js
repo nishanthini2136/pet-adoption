@@ -3,6 +3,8 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import './PetDetails.css';
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
+
 const PetDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -18,7 +20,8 @@ const PetDetails = () => {
         setError(null);
         
         console.log('Fetching pet details for ID:', id);
-        const response = await fetch(`http://localhost:5000/api/pets/${id}`);
+        const response = await fetch(`${API_BASE_URL}/api/pets/${id}`);
+
         console.log('Response status:', response.status);
 
         if (!response.ok) {

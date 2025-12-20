@@ -4,6 +4,8 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './PetOwnerDashboard.css';
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
+
 const PetOwnerPetsPage = () => {
   const { token, user } = useAuth();
   const [pets, setPets] = useState([]);
@@ -26,7 +28,7 @@ const PetOwnerPetsPage = () => {
   });
 
   useEffect(() => {
-    console.log('🔄 PetOwnerPetsPage useEffect triggered:', {
+    console.log(' PetOwnerPetsPage useEffect triggered:', {
       hasToken: !!token,
       user: user?.username,
       userId: user?.id,
@@ -34,10 +36,10 @@ const PetOwnerPetsPage = () => {
     });
     
     if (token && user && user.role === 'petowner') {
-      console.log('✅ Conditions met, calling fetchPets...');
+      console.log(' Conditions met, calling fetchPets...');
       fetchPets();
     } else {
-      console.log('❌ Conditions not met:', {
+      console.log(' Conditions not met:', {
         hasToken: !!token,
         hasUser: !!user,
         userRole: user?.role,
@@ -49,7 +51,7 @@ const PetOwnerPetsPage = () => {
   }, [token, user]);
 
   const fetchPets = async (retryCount = 0) => {
-    console.log('🔍 PetOwnerPetsPage - fetchPets called:', { 
+    console.log(' PetOwnerPetsPage - fetchPets called:', { 
       hasToken: !!token, 
       user: user?.username, 
       role: user?.role,
@@ -57,13 +59,13 @@ const PetOwnerPetsPage = () => {
     });
     
     if (!token) {
-      console.log('❌ No token found');
+      console.log(' No token found');
       setLoading(false);
       return;
     }
 
     if (!user || user.role !== 'petowner') {
-      console.log('❌ User not authorized:', { user: user?.username, role: user?.role });
+      console.log(' User not authorized:', { user: user?.username, role: user?.role });
       setLoading(false);
       return;
     }
@@ -72,8 +74,8 @@ const PetOwnerPetsPage = () => {
     setError('');
     
     try {
-      console.log('📡 Making request to /api/pets/owner...');
-      const response = await fetch('http://localhost:5000/api/pets/owner', {
+      console.log(' Making request to /api/pets/owner...');
+      const response = await fetch(`${API_BASE_URL}/api/pets/owner`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -81,7 +83,7 @@ const PetOwnerPetsPage = () => {
         }
       });
       
-      console.log('📡 Response status:', response.status);
+      console.log(' Response status:', response.status);
 
       if (!response.ok) {
         if (response.status === 401) {
@@ -101,15 +103,15 @@ const PetOwnerPetsPage = () => {
       }
 
       const data = await response.json();
-      console.log('📊 Received data from server:', data);
-      console.log('📊 Pets array:', data.data);
-      console.log('📊 Number of pets:', data.data?.length || 0);
+      console.log(' Received data from server:', data);
+      console.log(' Pets array:', data.data);
+      console.log(' Number of pets:', data.data?.length || 0);
       
       const petsData = data.data || [];
       setPets(petsData);
       
       if (petsData.length > 0) {
-        console.log('✅ Successfully loaded', petsData.length, 'pets');
+        console.log(' Successfully loaded', petsData.length, 'pets');
         petsData.forEach((pet, index) => {
           console.log(`Pet ${index + 1}:`, {
             id: pet._id,
@@ -120,7 +122,7 @@ const PetOwnerPetsPage = () => {
           });
         });
       } else {
-        console.log('⚠️ No pets found for this owner');
+        console.log(' No pets found for this owner');
       }
     } catch (err) {
       console.error('Error fetching pets:', err);
@@ -189,7 +191,7 @@ const PetOwnerPetsPage = () => {
     try {
       setLoading(true);
       
-      const response = await fetch(`http://localhost:5000/api/pets/${currentPet._id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/pets/${currentPet._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -222,7 +224,7 @@ const PetOwnerPetsPage = () => {
         setError('');
         
         // Show success message
-        toast.success(`🎉 "${updatedPet.name}" has been updated successfully and changes are saved to database!`);
+        toast.success(`"${updatedPet.name}" has been updated successfully and changes are saved to database!`);
       } else {
         const errorData = await response.json();
         const errorMsg = errorData.message || 'Failed to update pet';
@@ -267,7 +269,7 @@ const PetOwnerPetsPage = () => {
         imageUrl: petForm.image.trim()
       };
       
-      const response = await fetch('http://localhost:5000/api/pets', {
+      const response = await fetch(`${API_BASE_URL}/api/pets`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -283,7 +285,7 @@ const PetOwnerPetsPage = () => {
         throw new Error(errorMsg);
       }
       
-      console.log('✅ Pet added successfully to MongoDB Atlas:', data.data);
+      console.log(' Pet added successfully to MongoDB Atlas:', data.data);
       
       // Immediately add the new pet to local state for instant UI update
       const newPet = data.data;
@@ -295,7 +297,7 @@ const PetOwnerPetsPage = () => {
       setError('');
       
       // Show success message
-      toast.success(`🎉 "${petData.name}" has been added to your pets and is now visible to customers!`, {
+      toast.success(`"${petData.name}" has been added to your pets and is now visible to customers!`, {
         position: "top-right",
         autoClose: 5000,
       });
@@ -320,7 +322,7 @@ const PetOwnerPetsPage = () => {
         setLoading(true);
         console.log('Deleting pet from MongoDB Atlas...');
         
-        const response = await fetch(`http://localhost:5000/api/pets/${petId}`, {
+        const response = await fetch(`${API_BASE_URL}/api/pets/${petId}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -334,13 +336,13 @@ const PetOwnerPetsPage = () => {
         }
         
         const data = await response.json();
-        console.log('✅ Pet deleted successfully from MongoDB Atlas:', data);
+        console.log(' Pet deleted successfully from MongoDB Atlas:', data);
         
         // Update the UI by removing the deleted pet immediately for instant feedback
         setPets(prevPets => prevPets.filter(pet => pet._id !== petId));
         
         // Show success message
-        toast.success(`🗑️ "${petName}" has been deleted from your pets and removed from customer listings!`);
+        toast.success(`"${petName}" has been deleted from your pets and removed from customer listings!`);
         
       } catch (err) {
         console.error('Error deleting pet:', err);
@@ -377,7 +379,7 @@ const PetOwnerPetsPage = () => {
               fontWeight: 'bold'
             }}
           >
-            🐕 Add New Pet
+            Add New Pet
           </button>
           
           <button 
@@ -394,17 +396,17 @@ const PetOwnerPetsPage = () => {
               fontWeight: 'bold'
             }}
           >
-            {loading ? '🔄 Loading...' : '🔄 Refresh Pets'}
+            {loading ? ' Loading...' : ' Refresh Pets'}
           </button>
           
           <button 
             onClick={async () => {
               try {
-                const response = await fetch('http://localhost:5000/api/pets/debug-all', {
+                const response = await fetch(`${API_BASE_URL}/api/pets/debug-all`, {
                   headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const data = await response.json();
-                console.log('🔍 Debug Data:', data);
+                console.log(' Debug Data:', data);
                 alert(`Debug: Found ${data.debug.totalPetsInDB} total pets, ${data.debug.userPetsCount} for you. Check console for details.`);
               } catch (err) {
                 console.error('Debug error:', err);

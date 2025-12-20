@@ -5,6 +5,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { toast, ToastContainer } from 'react-toastify';
 import './AdoptionForm.css';
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
+
 const AdoptionForm = () => {
   const { petId } = useParams();
   const navigate = useNavigate();
@@ -118,7 +120,7 @@ const AdoptionForm = () => {
     try {
       console.log('Submitting adoption request for pet:', petId);
       
-      const response = await fetch(`http://localhost:5000/api/adoptions/${petId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/adoptions/${petId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -166,7 +168,7 @@ const AdoptionForm = () => {
   useEffect(() => {
     const fetchPetDetails = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/pets/${petId}`);
+        const response = await fetch(`${API_BASE_URL}/api/pets/${petId}`);
         if (!response.ok) throw new Error('Pet not found');
         const data = await response.json();
         setPetDetails(data.data); // Server returns { success: true, data: pet }

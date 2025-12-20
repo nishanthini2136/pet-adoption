@@ -5,6 +5,8 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './AdminDashboard.css';
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
+
 const AdminDashboard = () => {
   console.log('AdminDashboard component loaded');
   const { token } = useAuth();
@@ -44,7 +46,7 @@ const AdminDashboard = () => {
       
       // Fetch pets - try admin endpoint first, then fallback to basic endpoint
       try {
-        let petsResponse = await fetch('http://localhost:5000/api/admin/pets?limit=100', {
+        let petsResponse = await fetch(`${API_BASE_URL}/api/admin/pets?limit=100`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -53,7 +55,7 @@ const AdminDashboard = () => {
         
         if (!petsResponse.ok) {
           console.log('Admin pets endpoint failed, trying basic endpoint');
-          petsResponse = await fetch('http://localhost:5000/api/pets/admin', {
+          petsResponse = await fetch(`${API_BASE_URL}/api/pets/admin`, {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -75,7 +77,7 @@ const AdminDashboard = () => {
 
       // Fetch real users from database
       try {
-        const usersResponse = await fetch('http://localhost:5000/api/admin/users?limit=50', {
+        const usersResponse = await fetch(`${API_BASE_URL}/api/admin/users?limit=50`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -100,7 +102,7 @@ const AdminDashboard = () => {
 
       // Fetch real adoptions from database
       try {
-        const adoptionsResponse = await fetch('http://localhost:5000/api/admin/adoptions?limit=30', {
+        const adoptionsResponse = await fetch(`${API_BASE_URL}/api/admin/adoptions?limit=30`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'

@@ -5,6 +5,8 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './PetOwnerDashboard.css';
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
+
 const PetOwnerDashboard = () => {
   const { token, user } = useAuth();
   const [pets, setPets] = useState([]);
@@ -103,7 +105,7 @@ const PetOwnerDashboard = () => {
       
       console.log('Preparing to send pet data:', petData);
       
-      const response = await fetch('http://localhost:5000/api/pets', {
+      const response = await fetch(`${API_BASE_URL}/api/pets`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -185,7 +187,7 @@ const PetOwnerDashboard = () => {
       setLoading(true);
       console.log('Updating pet:', currentPet._id);
       
-      const response = await fetch(`http://localhost:5000/api/pets/${currentPet._id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/pets/${currentPet._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -246,7 +248,7 @@ const PetOwnerDashboard = () => {
         setLoading(true);
         console.log('Attempting to delete pet with ID:', petId);
         
-        const response = await fetch(`http://localhost:5000/api/pets/${petId}`, {
+        const response = await fetch(`${API_BASE_URL}/api/pets/${petId}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -303,7 +305,7 @@ const PetOwnerDashboard = () => {
     
     try {
       console.log('Making request to /api/pets/owner');
-      const response = await fetch('http://localhost:5000/api/pets/owner', {
+      const response = await fetch(`${API_BASE_URL}/api/pets/owner`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -402,7 +404,7 @@ const PetOwnerDashboard = () => {
         return;
       }
 
-      const response = await fetch('http://localhost:5000/api/adoptions/owner-requests', {
+      const response = await fetch(`${API_BASE_URL}/api/adoptions/owner-requests`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -454,7 +456,7 @@ const PetOwnerDashboard = () => {
   const handleAdoptionAction = async (adoptionId, action, ownerNotes = '') => {
     try {
       console.log(`${action} adoption request:`, adoptionId);
-      const response = await fetch(`http://localhost:5000/api/adoptions/${adoptionId}/status`, {
+      const response = await fetch(`${API_BASE_URL}/api/adoptions/${adoptionId}/status`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
