@@ -38,8 +38,6 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-// Explicitly handle preflight for API routes (Express 5-friendly)
-app.options("/api/*", cors(corsOptions));
 
 app.use(express.json());
 
