@@ -17,7 +17,22 @@ const app = express();
    ======================= */
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "https://pet-adoption-warl.vercel.app",
+    origin: (origin, callback) => {
+      const allowlist = (process.env.FRONTEND_URL || "")
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+      const isAllowed =
+        !origin ||
+        allowlist.includes(origin) ||
+        /^https:\/\/.*\.vercel\.app$/.test(origin) ||
+        /^http:\/\/localhost(?::\d+)?$/.test(origin) ||
+        /^http:\/\/127\.0\.0\.1(?::\d+)?$/.test(origin);
+
+      if (isAllowed) return callback(null, true);
+      return callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })

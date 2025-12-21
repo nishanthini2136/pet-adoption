@@ -31,7 +31,7 @@ const PetListings = () => {
       setLoading(true);
       setError(null);
 
-      const response = await API.get('/pets?status=Available', {
+      const response = await API.get('/api/pets?status=Available', {
         headers: {
           'Cache-Control': 'no-cache',
           'Pragma': 'no-cache',
