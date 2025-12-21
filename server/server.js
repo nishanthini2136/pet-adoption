@@ -15,32 +15,31 @@ const app = express();
 /* =======================
    ✅ CORS CONFIG (FIXED)
    ======================= */
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      const allowlist = (process.env.FRONTEND_URL || "")
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean);
+const corsOptions = {
+  origin: (origin, callback) => {
+    const allowlist = (process.env.FRONTEND_URL || "")
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
 
-      const isAllowed =
-        !origin ||
-        allowlist.includes(origin) ||
-        /^https:\/\/.*\.vercel\.app$/.test(origin) ||
-        /^http:\/\/localhost(?::\d+)?$/.test(origin) ||
-        /^http:\/\/127\.0\.0\.1(?::\d+)?$/.test(origin);
+    const isAllowed =
+      !origin ||
+      allowlist.includes(origin) ||
+      /^https:\/\/.*\.vercel\.app$/.test(origin) ||
+      /^http:\/\/localhost(?::\d+)?$/.test(origin) ||
+      /^http:\/\/127\.0\.0\.1(?::\d+)?$/.test(origin);
 
-      if (isAllowed) return callback(null, true);
-      return callback(new Error(`CORS blocked for origin: ${origin}`));
-    },
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    optionsSuccessStatus: 204,
-  })
-);
+    if (isAllowed) return callback(null, true);
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  optionsSuccessStatus: 204,
+};
 
-// Explicitly handle preflight
-app.options("*", cors());
+app.use(cors(corsOptions));
+// Explicitly handle preflight for API routes (Express 5-friendly)
+app.options("/api/*", cors(corsOptions));
 
 app.use(express.json());
 
