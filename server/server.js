@@ -108,7 +108,24 @@ mongoose.connection.on('disconnected', () => {
   connectDB();
 });
 
-// Routes
+// Root route
+app.get('/', (req, res) => {
+  res.json({
+    message: 'Welcome to PetAdopt API',
+    status: 'running',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    endpoints: {
+      auth: '/api/auth',
+      pets: '/api/pets',
+      adoptions: '/api/adoptions',
+      admin: '/api/admin'
+    },
+    documentation: 'https://github.com/yourusername/pet-adoption#api-documentation'
+  });
+});
+
+// API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/pets', petsRoutes);
 app.use('/api/adoptions', adoptionRoutes);
