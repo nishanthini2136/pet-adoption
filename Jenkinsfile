@@ -1,21 +1,20 @@
 pipeline {
     agent any
+
     stages {
-        stage('Clone Code') {
-            steps {
-                git 'https://github.com/nishanthini2136/pet-adoption.git'
-            }
-        }
+
         stage('Install Dependencies') {
             steps {
                 sh 'npm install'
             }
         }
+
         stage('Build Docker Image') {
             steps {
                 sh 'docker build -t pet-adoption-app .'
             }
         }
+
         stage('Run Container Test') {
             steps {
                 sh '''
