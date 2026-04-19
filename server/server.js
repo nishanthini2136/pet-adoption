@@ -11,37 +11,20 @@ dotenv.config();
 
 const app = express();
 
-// CORS Configuration
-const corsOptions = {
-  origin: function (origin, callback) {
-    const allowedOrigins = [
-      'http://localhost:3000',
-      'http://localhost:3001',
-      'https://pet-adoption-warl.vercel.app',
-      'https://pet-adoption-warl.vercel.app/',
-      process.env.FRONTEND_URL
-    ].filter(Boolean);
-    
-    // Allow requests with no origin (like mobile apps, curl, etc.)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
-    }
-    return callback(null, true);
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  exposedHeaders: ['Content-Range', 'X-Content-Range']
-};
+// Middleware
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+];
 
-// Apply CORS middleware
-app.use(cors(corsOptions));
+if (process.env.FRONTEND_URL) {
+  allowedOrigins.push(process.env.FRONTEND_URL);
+}
 
-// Handle preflight requests
-app.options('*', cors(corsOptions));
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true
+}));
 app.use(express.json());
 
 // Request logging middleware
@@ -108,80 +91,7 @@ mongoose.connection.on('disconnected', () => {
   connectDB();
 });
 
-// Log when database connection is established
-mongoose.connection.on('connected', () => {
-  console.log('✅ MongoDB connected successfully');
-  console.log('Available models:', Object.keys(mongoose.connection.models).join(', '));
-});
-
-// Log when the server starts listening
-// Start the server
-const startServer = () => {
-  const PORT = process.env.PORT || 5000;
-  const server = app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Server is running on port ${PORT}`);
-    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log('Allowed origins:', [
-      'http://localhost:3000',
-      'http://localhost:3001',
-      'https://pet-adoption-warl.vercel.app',
-      process.env.FRONTEND_URL
-    ].filter(Boolean).join(', '));
-  });
-
-  // Handle unhandled promise rejections
-  process.on('unhandledRejection', (err) => {
-    console.error('Unhandled Rejection:', err);
-    server.close(() => process.exit(1));
-  });
-
-  // Handle server errors
-  server.on('error', (error) => {
-    if (error.syscall !== 'listen') {
-      throw error;
-    }
-
-    // Handle specific listen errors with friendly messages
-    switch (error.code) {
-      case 'EACCES':
-        console.error(`Port ${PORT} requires elevated privileges`);
-        process.exit(1);
-        break;
-      case 'EADDRINUSE':
-        console.error(`Port ${PORT} is already in use`);
-        process.exit(1);
-        break;
-      default:
-        throw error;
-    }
-  });
-};
-
-// Start the server after database connection is established
-mongoose.connection.once('open', () => {
-  console.log('✅ MongoDB connected successfully');
-  console.log('Available models:', Object.keys(mongoose.connection.models).join(', '));
-  startServer();
-});
-
-// Root route
-app.get('/', (req, res) => {
-  res.json({
-    message: 'Welcome to PetAdopt API',
-    status: 'running',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development',
-    endpoints: {
-      auth: '/api/auth',
-      pets: '/api/pets',
-      adoptions: '/api/adoptions',
-      admin: '/api/admin'
-    },
-    documentation: 'https://github.com/yourusername/pet-adoption#api-documentation'
-  });
-});
-
-// API Routes
+// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/pets', petsRoutes);
 app.use('/api/adoptions', adoptionRoutes);
@@ -215,4 +125,9 @@ app.use((err, req, res, next) => {
   res.status(err.status || 500).json({
     message: err.message || 'Something went wrong!'
   });
+});
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
