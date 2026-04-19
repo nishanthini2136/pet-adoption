@@ -1,32 +1,74 @@
 pipeline {
     agent any
 
+    environment {
+        IMAGE_NAME = "pet-adoption-app"
+        CONTAINER_NAME = "pet-test"
+        PORT = "5000"
+    }
+
     stages {
+
+        stage('Clean Workspace') {
+            steps {
+                deleteDir()
+            }
+        }
+
+        stage('Clone Code') {
+            steps {
+                git branch: 'main', url: 'https://github.com/nishanthini2136/pet-adoption.git'
+            }
+        }
 
         stage('Install Dependencies') {
             steps {
-                sh 'npm install'
+                sh '''
+                echo "Installing dependencies..."
+                npm install
+                '''
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t pet-adoption-app .'
+                sh '''
+                echo "Building Docker image..."
+                docker build -t $IMAGE_NAME .
+                '''
             }
         }
 
         stage('Run Container Test') {
             steps {
                 sh '''
-                docker stop test || true
-                docker rm test || true
-                docker run -d -p 5000:5000 --name test pet-adoption-app
+                echo "Stopping old container if exists..."
+                docker stop $CONTAINER_NAME || true
+                docker rm $CONTAINER_NAME || true
+
+                echo "Running new container..."
+                docker run -d -p $PORT:$PORT --name $CONTAINER_NAME $IMAGE_NAME
+
+                echo "Waiting for app to start..."
                 sleep 10
-                curl http://localhost:5000
-                docker stop test
-                docker rm test
+
+                echo "Testing application..."
+                curl http://localhost:$PORT || exit 1
+
+                echo "Cleaning up..."
+                docker stop $CONTAINER_NAME
+                docker rm $CONTAINER_NAME
                 '''
             }
+        }
+    }
+
+    post {
+        success {
+            echo "✅ Build Successful!"
+        }
+        failure {
+            echo "❌ Build Failed!"
         }
     }
 }
