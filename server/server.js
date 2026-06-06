@@ -2,10 +2,10 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const authRoutes = require('./routes/auth');
-const petsRoutes = require('./routes/pets');
-const adoptionRoutes = require('./routes/adoption');
-const adminRoutes = require('./routes/admin');
+const authRoutes = require('./routes/auth.jsx');
+const petsRoutes = require('./routes/pets.jsx');
+const adoptionRoutes = require('./routes/adoption.jsx');
+const adminRoutes = require('./routes/admin.jsx');
 
 dotenv.config();
 
@@ -59,7 +59,7 @@ const connectDB = async () => {
     console.log(`   Ready State: ${conn.connection.readyState}`);
     
     // Test the connection by counting documents
-    const Pet = require('./models/Pet');
+    const Pet = require('./models/Pet.jsx');
     const petCount = await Pet.countDocuments();
     console.log(`   Total pets in database: ${petCount}`);
     

@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { protect } = require('../middleware/auth');
-const { adminAuth, adminOrOwnerAuth } = require('../middleware/adminAuth');
-const User = require('../models/User');
-const Pet = require('../models/Pet');
-const Adoption = require('../models/Adoption');
+const { protect } = require('../middleware/auth.jsx');
+const { adminAuth, adminOrOwnerAuth } = require('../middleware/adminAuth.jsx');
+const User = require('../models/User.jsx');
+const Pet = require('../models/Pet.jsx');
+const Adoption = require('../models/Adoption.jsx');
 
 // Apply protect middleware to all routes
 router.use(protect);

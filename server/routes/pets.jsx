@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const { protect } = require('../middleware/auth');
-const Pet = require('../models/Pet');
+const { protect } = require('../middleware/auth.jsx');
+const Pet = require('../models/Pet.jsx');
 
 router.get('/admin', protect, async (req, res) => {
   try {
@@ -130,7 +130,7 @@ router.get('/owner', protect, async (req, res) => {
     const pendingPets = pets.filter(pet => pet.status === 'Pending').length;
 
     // Get adoption requests for owner's pets
-    const Adoption = require('../models/Adoption');
+    const Adoption = require('../models/Adoption.jsx');
     const petIds = pets.map(pet => pet._id);
     const pendingRequests = await Adoption.countDocuments({
       pet: { $in: petIds },
